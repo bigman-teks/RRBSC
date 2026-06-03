@@ -1,0 +1,187 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/><meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>Leadership — Royal Rangers Bayelsa</title>
+<link rel="stylesheet" href="css.css"/>
+</head>
+<body>
+<nav id="navbar">
+  <div class="nav-inner">
+    <a class="brand" href="index.html">
+      <img class="app-logo nav-logo" src="" alt="Logo" style="height:36px;display:none"/>
+      <div class="logo-fallback small">RR</div>
+      <div class="brand-text"><span class="app-name">Royal Rangers</span><span class="app-state">Bayelsa State Command</span></div>
+    </a>
+    <div class="nav-links" id="navLinks">
+      <a href="index.html">Home</a>
+      <a href="excos.html" class="active">Leadership</a>
+      <a href="activities.html">Activities</a>
+      <a href="manuals.html">Training</a>
+      <a href="index.html#news-section">News</a>
+      <a href="index.html#contact-section">Contact</a>
+    </div>
+    <div class="nav-actions" id="navActions">
+      <a href="login.html" class="btn btn-outline">Login</a>
+      <a href="register.html" class="btn btn-red">Join Now</a>
+    </div>
+    <button class="hamburger" onclick="toggleMenu()">&#9776;</button>
+  </div>
+</nav>
+
+<div class="page-hero" style="background:linear-gradient(135deg,var(--dark),var(--blue));padding:56px 2rem;text-align:center;color:#fff">
+  <div class="hero-badge">State Executive Council</div>
+  <h1 style="margin:10px 0 8px">Our Leadership</h1>
+  <p style="color:rgba(255,255,255,.7);max-width:500px;margin:auto">Meet the dedicated commanders and officers serving Bayelsa State Command</p>
+</div>
+
+<section>
+  <div class="container">
+    <div id="excosContainer">
+      <div class="loading-msg" style="padding:60px;text-align:center;font-size:1rem">Loading leadership profiles...</div>
+    </div>
+  </div>
+</section>
+
+<!-- BIO MODAL -->
+<div id="bioModal" class="modal" style="display:none">
+  <div class="modal-box" style="max-width:500px">
+    <div style="display:flex;gap:20px;align-items:flex-start;margin-bottom:20px">
+      <div id="bioPhoto" style="width:90px;height:90px;border-radius:50%;background:var(--blue);display:flex;align-items:center;justify-content:center;color:#fff;font-size:1.8rem;font-weight:700;border:3px solid var(--gold);flex-shrink:0;overflow:hidden"></div>
+      <div>
+        <h3 id="bioName" style="color:var(--blue)"></h3>
+        <div id="bioRank" style="color:var(--gold);font-size:13px;font-weight:600;margin:4px 0"></div>
+        <div id="bioPosition" style="font-size:13px;color:var(--muted)"></div>
+      </div>
+    </div>
+    <div id="bioBio" style="font-size:13.5px;color:var(--muted);line-height:1.8;margin-bottom:16px"></div>
+    <div id="bioContact" style="font-size:13px;display:flex;flex-direction:column;gap:6px;margin-bottom:16px"></div>
+    <button class="btn btn-outline-dark" onclick="closeModal('bioModal')" style="width:100%">Close</button>
+  </div>
+</div>
+
+<footer style="background:var(--dark);color:rgba(255,255,255,.6);text-align:center;padding:20px;font-size:12px">
+  &copy; <span id="yr"></span> Royal Rangers Bayelsa State Command
+</footer>
+
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-storage-compat.js"></script>
+<script src="assets/js/firebase-config.js"></script>
+<script src="assets/js/auth.js"></script>
+<script>
+document.getElementById("yr").textContent = new Date().getFullYear();
+initFirebase();
+
+document.addEventListener("DOMContentLoaded", async () => {
+  await loadAppConfig();
+  auth.onAuthStateChanged(u => {
+    if (u) document.getElementById("navActions").innerHTML =
+      `<a href="dashboard.html" class="btn btn-outline">Dashboard</a>
+       <button class="btn btn-red" onclick="signOut()">Logout</button>`;
+  });
+  await loadExcos();
+});
+
+async function loadExcos() {
+  const container = document.getElementById("excosContainer");
+  try {
+    const snap = await db.collection("excos").orderBy("order","asc").get();
+    if (snap.empty) {
+      container.innerHTML = `<div style="text-align:center;padding:60px;color:var(--muted)">
+        <div style="font-size:3rem;margin-bottom:16px">&#127942;</div>
+        <p>Leadership profiles are being updated. Check back soon.</p></div>`;
+      return;
+    }
+
+    // Group by category if "category" field exists, else show flat grid
+    const excos = [];
+    snap.forEach(doc => excos.push({ id: doc.id, ...doc.data() }));
+
+    // Detect if any have a category field
+    const hasCategories = excos.some(e => e.category);
+
+    if (hasCategories) {
+      const groups = {};
+      excos.forEach(e => {
+        const cat = e.category || "General";
+        if (!groups[cat]) groups[cat] = [];
+        groups[cat].push(e);
+      });
+      container.innerHTML = "";
+      for (const [cat, members] of Object.entries(groups)) {
+        container.innerHTML += `
+          <div style="margin-bottom:48px">
+            <div class="section-title" style="text-align:left;margin-bottom:24px">
+              <h2 style="font-size:1.3rem">${cat}</h2>
+              <div class="line" style="margin:8px 0 0"></div>
+            </div>
+            <div class="excos-grid">${members.map(excoCard).join("")}</div>
+          </div>`;
+      }
+    } else {
+      container.innerHTML = `
+        <div class="section-title"><h2>State Executive Council</h2><div class="line"></div></div>
+        <div class="excos-grid">${excos.map(excoCard).join("")}</div>`;
+    }
+  } catch (e) {
+    container.innerHTML = `<p class="error-msg" style="text-align:center;padding:40px">Failed to load profiles: ${e.message}</p>`;
+  }
+}
+
+function excoCard(e) {
+  const initials = (e.name||"?").split(" ").map(w=>w[0]).slice(0,2).join("").toUpperCase();
+  return `
+    <div class="exco-card" onclick='openBio(${JSON.stringify(e)})'>
+      <div class="exco-photo-wrap">
+        ${e.photoURL
+          ? `<img src="${e.photoURL}" alt="${e.name}" class="exco-photo"/>`
+          : `<div class="exco-initials">${initials}</div>`}
+        <div class="exco-photo-ring"></div>
+      </div>
+      <div class="exco-name">${e.name||"—"}</div>
+      <div class="exco-rank">${e.rank||""}</div>
+      <div class="exco-position">${e.position||"—"}</div>
+      <button class="exco-bio-btn">View Profile</button>
+    </div>`;
+}
+
+function openBio(e) {
+  const initials = (e.name||"?").split(" ").map(w=>w[0]).slice(0,2).join("").toUpperCase();
+  const photoEl = document.getElementById("bioPhoto");
+  if (e.photoURL) {
+    photoEl.innerHTML = `<img src="${e.photoURL}" style="width:100%;height:100%;object-fit:cover;border-radius:50%"/>`;
+  } else {
+    photoEl.textContent = initials;
+  }
+  document.getElementById("bioName").textContent = e.name||"";
+  document.getElementById("bioRank").textContent = e.rank||"";
+  document.getElementById("bioPosition").textContent = e.position||"";
+  document.getElementById("bioBio").textContent = e.biography || "No biography available.";
+  let contactHtml = "";
+  if (e.phone) contactHtml += `<span>&#128222; ${e.phone}</span>`;
+  if (e.email) contactHtml += `<span>&#9993; ${e.email}</span>`;
+  document.getElementById("bioContact").innerHTML = contactHtml;
+  document.getElementById("bioModal").style.display = "flex";
+}
+
+function closeModal(id) { document.getElementById(id).style.display = "none"; }
+function toggleMenu() { document.getElementById("navLinks").classList.toggle("open"); }
+</script>
+
+<style>
+.excos-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(210px,1fr));gap:20px}
+.exco-card{background:#fff;border-radius:14px;padding:28px 20px;text-align:center;border:1px solid var(--border);box-shadow:var(--shadow);cursor:pointer;transition:.25s}
+.exco-card:hover{transform:translateY(-4px);box-shadow:0 10px 28px rgba(0,0,0,.12)}
+.exco-photo-wrap{position:relative;width:90px;height:90px;margin:0 auto 16px}
+.exco-photo{width:90px;height:90px;border-radius:50%;object-fit:cover;border:3px solid var(--gold);display:block}
+.exco-initials{width:90px;height:90px;border-radius:50%;background:var(--blue);display:flex;align-items:center;justify-content:center;color:#fff;font-size:1.6rem;font-weight:700;border:3px solid var(--gold)}
+.exco-name{font-weight:700;color:var(--blue);font-size:.95rem;margin-bottom:4px}
+.exco-rank{font-size:11px;color:var(--gold);font-weight:700;letter-spacing:.5px;margin-bottom:3px;text-transform:uppercase}
+.exco-position{font-size:12.5px;color:var(--muted);margin-bottom:14px}
+.exco-bio-btn{background:transparent;border:1.5px solid var(--blue);color:var(--blue);border-radius:6px;padding:5px 14px;font-size:12px;font-weight:600;cursor:pointer;transition:.2s}
+.exco-bio-btn:hover{background:var(--blue);color:#fff}
+</style>
+</body>
+</html>

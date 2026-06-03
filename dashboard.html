@@ -1,0 +1,291 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/><meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>My Dashboard — Royal Rangers Bayelsa</title>
+<link rel="stylesheet" href="assets/css/main.css"/>
+<!-- QR Code library -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+<!-- jsPDF for card download -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+</head>
+<body>
+
+<nav id="navbar">
+  <div class="nav-inner">
+    <a class="brand" href="index.html">
+      <img class="app-logo nav-logo" src="" alt="Logo" style="height:36px;display:none"/>
+      <div class="logo-fallback small">RR</div>
+      <div class="brand-text">
+        <span class="app-name">Royal Rangers</span>
+        <span class="app-state">Bayelsa State Command</span>
+      </div>
+    </a>
+    <div class="nav-links" id="navLinks">
+      <a href="index.html">Home</a>
+      <a href="dashboard.html" class="active">My Dashboard</a>
+      <a href="profile.html">My Profile</a>
+      <a href="activities.html">Events</a>
+      <a href="manuals.html">Training</a>
+      <a href="notifications.html">&#128276; Notifications <span class="notif-badge" id="notifBadge" style="display:none">0</span></a>
+    </div>
+    <div class="nav-actions">
+      <button class="btn btn-red" onclick="signOut()">Logout</button>
+    </div>
+    <button class="hamburger" onclick="toggleMenu()">&#9776;</button>
+  </div>
+</nav>
+
+<!-- MEMBER HEADER -->
+<div class="member-header" id="memberHeader">
+  <div class="mh-inner">
+    <div class="mh-avatar">
+      <img id="memberPhoto" src="" alt="Photo" style="display:none"/>
+      <div id="memberInitials" class="avatar-initials">--</div>
+    </div>
+    <div class="mh-info">
+      <div class="mh-welcome">Welcome back, Ranger</div>
+      <h1 id="memberName">Loading...</h1>
+      <div class="mh-meta">
+        <span id="memberRank">—</span> &bull;
+        <span id="memberID">—</span> &bull;
+        <span id="memberDistrict">—</span>
+      </div>
+    </div>
+    <div class="mh-status" id="memberStatusBadge"></div>
+  </div>
+</div>
+
+<!-- DASHBOARD CONTENT -->
+<div class="dash-body container">
+  <!-- Quick Stats -->
+  <div class="metric-grid">
+    <div class="metric-card"><div class="mc-icon blue">&#127891;</div>
+      <div><div class="mc-val" id="certCount">—</div><div class="mc-lbl">Certifications</div></div>
+    </div>
+    <div class="metric-card"><div class="mc-icon red">&#128197;</div>
+      <div><div class="mc-val" id="eventCount">—</div><div class="mc-lbl">Events Registered</div></div>
+    </div>
+    <div class="metric-card"><div class="mc-icon gold">&#10003;</div>
+      <div><div class="mc-val" id="attendCount">—</div><div class="mc-lbl">Attendance Records</div></div>
+    </div>
+    <div class="metric-card"><div class="mc-icon green">&#127941;</div>
+      <div><div class="mc-val" id="memberRankCard">—</div><div class="mc-lbl">Current Rank</div></div>
+    </div>
+  </div>
+
+  <div class="dash-two-col">
+    <!-- MEMBERSHIP CARD -->
+    <div>
+      <h3 class="dash-section-title">My Membership Card</h3>
+      <div class="membership-card" id="membershipCard">
+        <div class="mc-header">
+          <div>
+            <img class="app-logo mc-logo" src="" alt="RR" style="display:none;height:36px"/>
+            <div class="mc-org">&#9876; ROYAL RANGERS</div>
+            <div class="mc-state app-state">BAYELSA STATE COMMAND</div>
+          </div>
+          <div class="mc-id-box" id="cardMemberID">—</div>
+        </div>
+        <div class="mc-body">
+          <div class="mc-avatar">
+            <img id="cardPhoto" src="" style="display:none;width:64px;height:64px;border-radius:50%;object-fit:cover;border:2px solid var(--gold)"/>
+            <div id="cardInitials" class="avatar-initials" style="width:64px;height:64px;font-size:1.4rem">--</div>
+          </div>
+          <div class="mc-member-info">
+            <div class="mc-name" id="cardName">—</div>
+            <div class="mc-rank" id="cardRank">—</div>
+          </div>
+        </div>
+        <div class="mc-details">
+          <div class="mc-detail"><div class="mcd-lbl">District</div><div class="mcd-val" id="cardDistrict">—</div></div>
+          <div class="mc-detail"><div class="mcd-lbl">Outpost</div><div class="mcd-val" id="cardOutpost">—</div></div>
+          <div class="mc-detail"><div class="mcd-lbl">Member Since</div><div class="mcd-val" id="cardSince">—</div></div>
+          <div class="mc-detail"><div class="mcd-lbl">Status</div><div class="mcd-val" id="cardStatus">—</div></div>
+        </div>
+        <div class="mc-footer">
+          <div class="mc-valid">Valid: <span id="cardYear">2025</span> – <span id="cardYearEnd">2026</span></div>
+          <div id="qrCode"></div>
+        </div>
+      </div>
+      <button class="btn btn-blue" style="width:100%;margin-top:12px" onclick="downloadCard()">&#8659; Download Card (PDF)</button>
+    </div>
+
+    <!-- NOTIFICATIONS & UPCOMING -->
+    <div>
+      <h3 class="dash-section-title">My Notifications</h3>
+      <div class="notif-list" id="notifList"><div class="loading-msg">Loading...</div></div>
+
+      <h3 class="dash-section-title" style="margin-top:24px">Upcoming Events</h3>
+      <div class="dash-events" id="dashEvents"><div class="loading-msg">Loading...</div></div>
+
+      <h3 class="dash-section-title" style="margin-top:24px">My Training Records</h3>
+      <div id="trainingList"><div class="loading-msg">Loading...</div></div>
+    </div>
+  </div>
+</div>
+
+<footer class="mini-footer">
+  &copy; <script>document.write(new Date().getFullYear())</script> Royal Rangers Bayelsa State Command
+</footer>
+
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-storage-compat.js"></script>
+<script src="assets/js/firebase-config.js"></script>
+<script src="assets/js/auth.js"></script>
+<script>
+let currentUser = null;
+initFirebase();
+
+(async () => {
+  await loadAppConfig();
+  currentUser = await requireAuth();
+  if (!currentUser) return;
+  populateMemberUI(currentUser);
+  loadNotifications(currentUser.uid);
+  loadUpcomingEventsForMember();
+  loadTrainingRecords(currentUser);
+})();
+
+function populateMemberUI(u) {
+  // Nav
+  document.getElementById("memberName").textContent = u.fullName || `${u.firstName} ${u.lastName}`;
+  document.getElementById("memberRank").textContent = u.rank || "Recruit";
+  document.getElementById("memberID").textContent = u.membershipID || "—";
+  document.getElementById("memberDistrict").textContent = u.district || "—";
+
+  const initials = ((u.firstName||"?")[0] + (u.lastName||"?")[0]).toUpperCase();
+  document.getElementById("memberInitials").textContent = initials;
+  document.getElementById("cardInitials").textContent = initials;
+
+  if (u.photoURL) {
+    document.getElementById("memberPhoto").src = u.photoURL;
+    document.getElementById("memberPhoto").style.display = "block";
+    document.getElementById("memberInitials").style.display = "none";
+    document.getElementById("cardPhoto").src = u.photoURL;
+    document.getElementById("cardPhoto").style.display = "block";
+    document.getElementById("cardInitials").style.display = "none";
+  }
+
+  const statusMap = { active:"&#10003; Active", pending:"&#9203; Pending Approval", inactive:"&#10007; Inactive" };
+  document.getElementById("memberStatusBadge").innerHTML = `<span class="status-badge status-${u.status||'pending'}">${statusMap[u.status]||u.status}</span>`;
+
+  // Card
+  document.getElementById("cardMemberID").textContent = u.membershipID || "—";
+  document.getElementById("cardName").textContent = u.fullName || `${u.firstName} ${u.lastName}`;
+  document.getElementById("cardRank").textContent = "&#11088; " + (u.rank || "Recruit");
+  document.getElementById("cardDistrict").textContent = u.district || "—";
+  document.getElementById("cardOutpost").textContent = u.outpost || "—";
+  document.getElementById("cardStatus").textContent = u.status === "active" ? "✓ Active" : u.status;
+  const yr = new Date().getFullYear();
+  document.getElementById("cardYear").textContent = yr;
+  document.getElementById("cardYearEnd").textContent = yr + 1;
+
+  if (u.createdAt) {
+    const d = u.createdAt.toDate ? u.createdAt.toDate() : new Date(u.createdAt);
+    document.getElementById("cardSince").textContent = d.toLocaleDateString("en-GB", {month:"short",year:"numeric"});
+  }
+
+  // QR Code (links to verification page)
+  new QRCode(document.getElementById("qrCode"), {
+    text: `${window.location.origin}/verify.html?id=${u.membershipID}`,
+    width: 64, height: 64,
+    colorDark: "#ffffff", colorLight: "transparent"
+  });
+
+  // Stats
+  document.getElementById("certCount").textContent = (u.certifications||[]).length;
+  document.getElementById("memberRankCard").textContent = u.rank || "Recruit";
+}
+
+async function loadNotifications(uid) {
+  const el = document.getElementById("notifList");
+  const snap = await db.collection("notifications")
+    .where("userId","in",[uid,"admins"])
+    .orderBy("createdAt","desc").limit(10).get();
+  if (snap.empty) { el.innerHTML = "<p style='color:var(--muted);font-size:13px'>No notifications yet.</p>"; return; }
+  el.innerHTML = "";
+  let unread = 0;
+  snap.forEach(doc => {
+    const d = doc.data();
+    if (!d.read) unread++;
+    const dt = d.createdAt?.toDate().toLocaleDateString("en-GB",{day:"numeric",month:"short"}) || "";
+    el.innerHTML += `<div class="notif-item ${d.read?'':'unread'}" onclick="markRead('${doc.id}',this)">
+      <div class="notif-icon">${d.type==="new_member"?"&#128100;":d.type==="event"?"&#128197;":"&#128276;"}</div>
+      <div><div class="notif-title">${d.title}</div><div class="notif-msg">${d.message}</div><div class="notif-date">${dt}</div></div>
+    </div>`;
+  });
+  if (unread > 0) {
+    document.getElementById("notifBadge").textContent = unread;
+    document.getElementById("notifBadge").style.display = "inline-block";
+  }
+  document.getElementById("eventCount").textContent = snap.size;
+}
+
+async function markRead(docId, el) {
+  await db.collection("notifications").doc(docId).update({ read: true });
+  el.classList.remove("unread");
+}
+
+async function loadUpcomingEventsForMember() {
+  const el = document.getElementById("dashEvents");
+  const snap = await db.collection("events")
+    .where("date",">=", firebase.firestore.Timestamp.fromDate(new Date()))
+    .orderBy("date","asc").limit(3).get();
+  if (snap.empty) { el.innerHTML = "<p style='color:var(--muted);font-size:13px'>No upcoming events.</p>"; return; }
+  el.innerHTML = "";
+  snap.forEach(doc => {
+    const d = doc.data();
+    const dt = d.date?.toDate();
+    el.innerHTML += `<div class="mini-event">
+      <div class="me-date">${dt?.toLocaleDateString("en-GB",{day:"numeric",month:"short"})||"TBA"}</div>
+      <div class="me-info"><div class="me-title">${d.title}</div><div class="me-loc">&#128205; ${d.location||"TBA"}</div></div>
+      <a href="activities.html?event=${doc.id}" class="btn btn-red" style="font-size:12px;padding:5px 10px">Register</a>
+    </div>`;
+  });
+}
+
+function loadTrainingRecords(u) {
+  const el = document.getElementById("trainingList");
+  const records = u.trainingRecords || [];
+  if (!records.length) { el.innerHTML = "<p style='color:var(--muted);font-size:13px'>No training records yet.</p>"; return; }
+  el.innerHTML = records.map(r => `
+    <div class="training-item">
+      <div class="ti-icon">&#127891;</div>
+      <div><div class="ti-name">${r.name}</div><div class="ti-date">${r.date||""} • ${r.status||"Completed"}</div></div>
+    </div>`).join("");
+  document.getElementById("attendCount").textContent = records.length;
+}
+
+async function downloadCard() {
+  const { jsPDF } = window.jspdf;
+  const doc = new jsPDF({ orientation: "landscape", unit: "mm", format: [85.6, 53.98] });
+  const u = currentUser;
+  // Background
+  doc.setFillColor(26, 82, 118);
+  doc.rect(0, 0, 85.6, 53.98, "F");
+  // Logo (if set)
+  if (APP_CONFIG.LOGO_URL && APP_CONFIG.LOGO_URL !== "PASTE_LOGO_LINK_HERE") {
+    try { doc.addImage(APP_CONFIG.LOGO_URL, "PNG", 3, 2, 12, 12); } catch(e) {}
+  }
+  doc.setFontSize(7); doc.setTextColor(212, 172, 13);
+  doc.text("ROYAL RANGERS — BAYELSA STATE COMMAND", 42.8, 5, { align: "center" });
+  doc.setTextColor(255,255,255); doc.setFontSize(11); doc.setFont(undefined,"bold");
+  doc.text(u.fullName || `${u.firstName} ${u.lastName}`, 42.8, 20, { align: "center" });
+  doc.setFontSize(8); doc.setFont(undefined,"normal"); doc.setTextColor(212,172,13);
+  doc.text(u.rank || "Recruit", 42.8, 26, { align: "center" });
+  doc.setTextColor(255,255,255); doc.setFontSize(7);
+  doc.text(`ID: ${u.membershipID||"—"}`, 42.8, 32, { align: "center" });
+  doc.text(`District: ${u.district||"—"}  |  Outpost: ${u.outpost||"—"}`, 42.8, 37, { align: "center" });
+  doc.text(`Status: ${u.status||"—"}  |  Valid: ${new Date().getFullYear()} – ${new Date().getFullYear()+1}`, 42.8, 42, { align: "center" });
+  doc.setFontSize(6); doc.setTextColor(150,180,200);
+  doc.text("Assemblies of God Nigeria", 42.8, 50, { align: "center" });
+  doc.save(`RR_Card_${u.membershipID||u.firstName}.pdf`);
+}
+
+function toggleMenu() { document.getElementById("navLinks").classList.toggle("open"); }
+</script>
+</body>
+</html>

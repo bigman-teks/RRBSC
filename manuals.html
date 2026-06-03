@@ -1,0 +1,250 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/><meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>Training Center — Royal Rangers Bayelsa</title>
+<link rel="stylesheet" href="css.css"/>
+</head>
+<body>
+<nav id="navbar">
+  <div class="nav-inner">
+    <a class="brand" href="index.html">
+      <img class="app-logo nav-logo" src="" alt="Logo" style="height:36px;display:none"/>
+      <div class="logo-fallback small">RR</div>
+      <div class="brand-text"><span class="app-name">Royal Rangers</span><span class="app-state">Bayelsa State Command</span></div>
+    </a>
+    <div class="nav-links" id="navLinks">
+      <a href="index.html">Home</a>
+      <a href="excos.html">Leadership</a>
+      <a href="activities.html">Activities</a>
+      <a href="manuals.html" class="active">Training</a>
+      <a href="index.html#contact-section">Contact</a>
+    </div>
+    <div class="nav-actions" id="navActions">
+      <a href="login.html" class="btn btn-outline">Login</a>
+      <a href="register.html" class="btn btn-red">Join Now</a>
+    </div>
+    <button class="hamburger" onclick="toggleMenu()">&#9776;</button>
+  </div>
+</nav>
+
+<div style="background:linear-gradient(135deg,var(--dark),var(--blue));padding:56px 2rem;text-align:center;color:#fff">
+  <div class="hero-badge">Digital Learning Portal</div>
+  <h1 style="margin:10px 0 8px">Training Center</h1>
+  <p style="color:rgba(255,255,255,.7)">Access manuals, handbooks, resources and training materials</p>
+</div>
+
+<section>
+  <div class="container">
+
+    <!-- Auth Gate Notice -->
+    <div id="authNotice" style="display:none;background:#EBF5FB;border:1.5px solid #AED6F1;border-radius:10px;padding:16px 20px;margin-bottom:24px;font-size:14px;color:var(--blue)">
+      &#128274; Some resources require member login. <a href="login.html" style="font-weight:700;color:var(--red)">Login here</a> to access all materials.
+    </div>
+
+    <!-- Search & Filter -->
+    <div style="display:flex;gap:12px;flex-wrap:wrap;margin-bottom:24px;align-items:center">
+      <input id="manualSearch" placeholder="&#128269; Search manuals..." oninput="searchManuals(this.value)"
+        style="flex:1;min-width:200px;padding:10px 14px;border:1.5px solid var(--border);border-radius:8px;font-size:14px;font-family:inherit"/>
+      <select id="catFilter" onchange="filterManuals()" style="padding:10px 12px;border:1.5px solid var(--border);border-radius:8px;font-size:14px;font-family:inherit;background:#fff">
+        <option value="">All Categories</option>
+        <option>Basic Training</option>
+        <option>Leadership</option>
+        <option>Camp Skills</option>
+        <option>Drill</option>
+        <option>Bible Study</option>
+        <option>Other</option>
+      </select>
+    </div>
+
+    <!-- Category Quick Access -->
+    <div style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:32px">
+      <button class="filter-btn active" onclick="filterByCat('',this)">All</button>
+      <button class="filter-btn" onclick="filterByCat('Basic Training',this)">&#128218; Basic Training</button>
+      <button class="filter-btn" onclick="filterByCat('Leadership',this)">&#127941; Leadership</button>
+      <button class="filter-btn" onclick="filterByCat('Camp Skills',this)">&#9981; Camp Skills</button>
+      <button class="filter-btn" onclick="filterByCat('Drill',this)">&#128116; Drill</button>
+      <button class="filter-btn" onclick="filterByCat('Bible Study',this)">&#128213; Bible Study</button>
+    </div>
+
+    <!-- Manuals Grid -->
+    <div id="manualsGrid"><div class="loading-msg">Loading training materials...</div></div>
+
+  </div>
+</section>
+
+<!-- Manual Viewer Modal -->
+<div id="viewerModal" class="modal" style="display:none">
+  <div class="modal-box" style="max-width:600px">
+    <h3 id="viewerTitle" style="color:var(--blue);margin-bottom:8px"></h3>
+    <p id="viewerDesc" style="font-size:13px;color:var(--muted);margin-bottom:16px"></p>
+    <div id="viewerContent" style="border:1px solid var(--border);border-radius:8px;overflow:hidden;margin-bottom:16px">
+      <!-- PDF/Video embed or download prompt -->
+    </div>
+    <div style="display:flex;gap:10px">
+      <a id="viewerDownload" href="#" target="_blank" class="btn btn-blue">&#8659; Download</a>
+      <button class="btn btn-outline-dark" onclick="closeModal('viewerModal')">Close</button>
+    </div>
+  </div>
+</div>
+
+<footer style="background:var(--dark);color:rgba(255,255,255,.6);text-align:center;padding:20px;font-size:12px;margin-top:60px">
+  &copy; <span id="yr"></span> Royal Rangers Bayelsa State Command
+</footer>
+
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-storage-compat.js"></script>
+<script src="assets/js/firebase-config.js"></script>
+<script src="assets/js/auth.js"></script>
+<script>
+document.getElementById("yr").textContent = new Date().getFullYear();
+let allManuals = [], currentUserData = null;
+
+initFirebase();
+document.addEventListener("DOMContentLoaded", async () => {
+  await loadAppConfig();
+  auth.onAuthStateChanged(async u => {
+    if (u) {
+      currentUserData = await getCurrentUserData();
+      document.getElementById("navActions").innerHTML =
+        `<a href="dashboard.html" class="btn btn-outline">Dashboard</a>
+         <button class="btn btn-red" onclick="signOut()">Logout</button>`;
+      document.getElementById("authNotice").style.display = "none";
+    } else {
+      document.getElementById("authNotice").style.display = "block";
+    }
+    await loadManuals();
+  });
+});
+
+async function loadManuals() {
+  const snap = await db.collection("manuals").orderBy("createdAt","desc").get();
+  allManuals = [];
+  snap.forEach(doc => allManuals.push({ id: doc.id, ...doc.data() }));
+  renderManuals(allManuals);
+}
+
+function canAccess(manual) {
+  if (!currentUserData) return manual.downloadPermission === "all" || !manual.downloadPermission;
+  const roleLevel = { member:0, outpost_admin:1, district_admin:2, state_admin:3, super_admin:4 };
+  const permLevel = { all:0, district_admin:2, state_admin:3 };
+  return (roleLevel[currentUserData.role]||0) >= (permLevel[manual.downloadPermission]||0);
+}
+
+function renderManuals(manuals) {
+  const el = document.getElementById("manualsGrid");
+  if (!manuals.length) {
+    el.innerHTML = `<div style="text-align:center;padding:60px;color:var(--muted)">
+      <div style="font-size:3rem;margin-bottom:12px">&#128218;</div>
+      <p>No training materials found for this category.</p></div>`;
+    return;
+  }
+  // Group by category
+  const groups = {};
+  manuals.forEach(m => {
+    const cat = m.category || "Other";
+    if (!groups[cat]) groups[cat] = [];
+    groups[cat].push(m);
+  });
+  el.innerHTML = Object.entries(groups).map(([cat, items]) => `
+    <div style="margin-bottom:36px">
+      <h3 style="color:var(--blue);margin-bottom:16px;padding-bottom:8px;border-bottom:2px solid var(--gold);display:inline-block">${catIcon(cat)} ${cat}</h3>
+      <div class="manuals-grid">${items.map(m => manualCard(m)).join("")}</div>
+    </div>`).join("");
+}
+
+function catIcon(cat) {
+  const map = {"Basic Training":"📘","Leadership":"🏆","Camp Skills":"⛺","Drill":"🥁","Bible Study":"📖","Other":"📄"};
+  return map[cat] || "📄";
+}
+
+function manualCard(m) {
+  const accessible = canAccess(m);
+  const fileExt = (m.fileName||"").split(".").pop().toUpperCase();
+  const fileIcon = {PDF:"📕",DOCX:"📘",DOC:"📘",PPT:"📙",PPTX:"📙",MP4:"🎬"}[fileExt] || "📄";
+  return `
+    <div class="manual-card ${!accessible&&currentUserData?'locked':''}">
+      <div class="manual-icon">${fileIcon}</div>
+      <div class="manual-info">
+        <div class="manual-title">${m.title}</div>
+        <div class="manual-cat">${m.category||"General"}</div>
+        ${m.description?`<div class="manual-desc">${m.description.slice(0,80)}${m.description.length>80?"...":""}</div>`:""}
+        <div class="manual-meta">${fileExt} file</div>
+      </div>
+      <div class="manual-actions">
+        ${accessible
+          ? `<button class="btn btn-blue" style="font-size:12px;padding:6px 14px" onclick="viewManual('${m.id}')">&#128065; View</button>
+             <a href="${m.fileUrl}" target="_blank" download class="btn btn-outline-dark" style="font-size:12px;padding:6px 14px">&#8659; Download</a>`
+          : `<span style="font-size:12px;color:var(--muted)">&#128274; ${currentUserData?"Restricted":"Login to access"}</span>`
+        }
+      </div>
+    </div>`;
+}
+
+function viewManual(id) {
+  const m = allManuals.find(x => x.id === id);
+  if (!m || !canAccess(m)) return;
+  const ext = (m.fileName||"").split(".").pop().toLowerCase();
+  document.getElementById("viewerTitle").textContent = m.title;
+  document.getElementById("viewerDesc").textContent = m.description || "";
+  document.getElementById("viewerDownload").href = m.fileUrl;
+  const contentEl = document.getElementById("viewerContent");
+  if (ext === "pdf") {
+    contentEl.innerHTML = `<iframe src="${m.fileUrl}" style="width:100%;height:500px;border:none"></iframe>`;
+  } else if (ext === "mp4") {
+    contentEl.innerHTML = `<video controls style="width:100%;max-height:400px"><source src="${m.fileUrl}" type="video/mp4"></video>`;
+  } else {
+    contentEl.innerHTML = `<div style="padding:40px;text-align:center;color:var(--muted)">
+      <div style="font-size:3rem;margin-bottom:12px">📄</div>
+      <p>Preview not available for this file type. Click Download to open.</p></div>`;
+  }
+  document.getElementById("viewerModal").style.display = "flex";
+}
+
+function searchManuals(q) {
+  q = q.toLowerCase();
+  const filtered = allManuals.filter(m =>
+    m.title?.toLowerCase().includes(q) ||
+    m.category?.toLowerCase().includes(q) ||
+    m.description?.toLowerCase().includes(q)
+  );
+  renderManuals(filtered);
+}
+
+function filterManuals() {
+  const cat = document.getElementById("catFilter").value;
+  filterByCat(cat, null);
+}
+
+function filterByCat(cat, btn) {
+  if (btn) {
+    document.querySelectorAll(".filter-btn").forEach(b => b.classList.remove("active"));
+    btn.classList.add("active");
+  }
+  const filtered = cat ? allManuals.filter(m => m.category === cat) : allManuals;
+  renderManuals(filtered);
+}
+
+function closeModal(id) { document.getElementById(id).style.display = "none"; }
+function toggleMenu() { document.getElementById("navLinks").classList.toggle("open"); }
+</script>
+
+<style>
+.filter-btn{padding:7px 16px;border-radius:20px;border:1.5px solid var(--border);background:#fff;font-size:13px;cursor:pointer;transition:.2s;color:var(--text)}
+.filter-btn.active,.filter-btn:hover{background:var(--blue);color:#fff;border-color:var(--blue)}
+.manuals-grid{display:flex;flex-direction:column;gap:10px}
+.manual-card{background:#fff;border:1px solid var(--border);border-radius:10px;padding:16px;display:flex;gap:16px;align-items:center;transition:.2s}
+.manual-card:hover{box-shadow:var(--shadow)}
+.manual-card.locked{opacity:.7}
+.manual-icon{font-size:2rem;flex-shrink:0}
+.manual-info{flex:1}
+.manual-title{font-size:.95rem;font-weight:700;color:var(--text);margin-bottom:3px}
+.manual-cat{font-size:11px;font-weight:600;color:var(--blue);margin-bottom:4px}
+.manual-desc{font-size:12px;color:var(--muted);margin-bottom:4px}
+.manual-meta{font-size:11px;color:var(--muted)}
+.manual-actions{display:flex;gap:8px;flex-shrink:0;flex-wrap:wrap}
+</style>
+</body>
+</html>

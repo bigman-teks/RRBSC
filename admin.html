@@ -1,0 +1,1013 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/><meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>Admin Panel — Royal Rangers Bayelsa</title>
+<link rel="stylesheet" href="css.css"/>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.31/jspdf.plugin.autotable.min.js"></script>
+</head>
+<body class="admin-body">
+
+<div class="admin-layout">
+  <!-- SIDEBAR -->
+  <aside class="sidebar" id="sidebar">
+    <div class="sidebar-logo">
+      <img class="app-logo" src="" alt="RR" style="display:none;height:44px;margin-bottom:6px"/>
+      <div class="sl-title">&#9876; Royal Rangers</div>
+      <div class="sl-sub app-state">Bayelsa Admin</div>
+      <div class="sl-role" id="adminRoleLabel">—</div>
+    </div>
+    <nav class="sidebar-nav">
+      <div class="sn-section">MAIN</div>
+      <a class="sn-link active" onclick="showSection('dashboard')">&#128202; Dashboard</a>
+      <a class="sn-link" onclick="showSection('members')">&#128101; Members</a>
+      <a class="sn-link" onclick="showSection('approvals')">&#9203; Pending Approvals <span class="badge-pill" id="pendingBadge">0</span></a>
+      <div class="sn-section">CONTENT</div>
+      <a class="sn-link" onclick="showSection('events')">&#128197; Events</a>
+      <a class="sn-link" onclick="showSection('news')">&#128240; News</a>
+      <a class="sn-link" onclick="showSection('gallery')">&#128247; Gallery</a>
+      <a class="sn-link" onclick="showSection('excos')">&#127942; Excos / Leadership</a>
+      <div class="sn-section">OPERATIONS</div>
+      <a class="sn-link" onclick="showSection('training')">&#127891; Training Manuals</a>
+      <a class="sn-link" onclick="showSection('activities')">&#128218; Plan of Work</a>
+      <a class="sn-link" onclick="showSection('payments')">&#128178; Payments</a>
+      <a class="sn-link" onclick="showSection('notifications')">&#128276; Notifications</a>
+      <div class="sn-section">SYSTEM</div>
+      <a class="sn-link" onclick="showSection('reports')">&#128196; Reports</a>
+      <a class="sn-link" onclick="showSection('settings')">&#9881; Settings</a>
+      <a class="sn-link logout-link" onclick="signOut()">&#8592; Logout</a>
+    </nav>
+  </aside>
+
+  <!-- MAIN -->
+  <main class="admin-main">
+    <div class="admin-topbar">
+      <button class="hamburger" onclick="toggleSidebar()">&#9776;</button>
+      <h2 id="sectionTitle">Dashboard</h2>
+      <div class="topbar-right">
+        <span id="adminName" style="font-size:13px;color:var(--muted)"></span>
+        <div class="admin-avatar" id="adminAvatar">—</div>
+      </div>
+    </div>
+
+    <!-- ===== DASHBOARD ===== -->
+    <div class="admin-section active" id="section-dashboard">
+      <div class="metric-grid">
+        <div class="metric-card"><div class="mc-icon blue">&#128101;</div><div><div class="mc-val" id="dmTotal">—</div><div class="mc-lbl">Total Members</div></div></div>
+        <div class="metric-card"><div class="mc-icon green">&#10003;</div><div><div class="mc-val" id="dmActive">—</div><div class="mc-lbl">Active Members</div></div></div>
+        <div class="metric-card"><div class="mc-icon gold">&#9203;</div><div><div class="mc-val" id="dmPending">—</div><div class="mc-lbl">Pending Approval</div></div></div>
+        <div class="metric-card"><div class="mc-icon red">&#128197;</div><div><div class="mc-val" id="dmEvents">—</div><div class="mc-lbl">Events This Year</div></div></div>
+        <div class="metric-card"><div class="mc-icon purple">&#128178;</div><div><div class="mc-val" id="dmPayments">—</div><div class="mc-lbl">Payments Received</div></div></div>
+        <div class="metric-card"><div class="mc-icon teal">&#127891;</div><div><div class="mc-val" id="dmManuals">—</div><div class="mc-lbl">Training Manuals</div></div></div>
+      </div>
+      <div class="dash-two-col">
+        <div class="dash-card">
+          <div class="dc-title">Members by District</div>
+          <div id="districtChart"></div>
+        </div>
+        <div class="dash-card">
+          <div class="dc-title">Recent Activity</div>
+          <div id="recentActivity"><div class="loading-msg">Loading...</div></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ===== MEMBERS ===== -->
+    <div class="admin-section" id="section-members">
+      <div class="section-toolbar">
+        <input id="memberSearch" placeholder="&#128269; Search by name, ID, district..." oninput="searchMembers(this.value)"/>
+        <select id="memberFilterStatus" onchange="filterMembers()">
+          <option value="">All Status</option><option>active</option><option>pending</option><option>inactive</option>
+        </select>
+        <select id="memberFilterDistrict" onchange="filterMembers()">
+          <option value="">All Districts</option>
+          <option>Bayelsa North</option><option>Bayelsa East</option><option>Bayelsa Central</option>
+        </select>
+        <button class="btn btn-red" onclick="openAddMemberModal()">+ Add Member</button>
+        <button class="btn btn-outline-dark" onclick="exportMembersExcel()">&#8659; Excel</button>
+        <button class="btn btn-outline-dark" onclick="exportMembersPDF()">&#8659; PDF</button>
+      </div>
+      <div class="table-wrap">
+        <table id="membersTable">
+          <thead><tr>
+            <th>Photo</th><th>Membership ID</th><th>Full Name</th><th>District</th>
+            <th>Rank</th><th>Phone</th><th>Status</th><th>Actions</th>
+          </tr></thead>
+          <tbody id="membersBody"><tr><td colspan="8" class="loading-msg">Loading...</td></tr></tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- ===== APPROVALS ===== -->
+    <div class="admin-section" id="section-approvals">
+      <h3 style="margin-bottom:16px">Pending Member Registrations</h3>
+      <div id="approvalsList"><div class="loading-msg">Loading...</div></div>
+    </div>
+
+    <!-- ===== EVENTS ===== -->
+    <div class="admin-section" id="section-events">
+      <div class="section-toolbar">
+        <button class="btn btn-red" onclick="openEventModal()">+ Create Event</button>
+      </div>
+      <div id="eventsAdminList"><div class="loading-msg">Loading...</div></div>
+
+      <!-- Event Modal -->
+      <div id="eventModal" class="modal" style="display:none">
+        <div class="modal-box wide">
+          <h3 id="eventModalTitle">Create Event</h3>
+          <div class="form-row">
+            <div class="form-group"><label>Event Title *</label><input id="evTitle" required/></div>
+            <div class="form-group"><label>Type</label>
+              <select id="evType"><option>Camp Meeting</option><option>Training</option><option>Conference</option><option>Jamboree</option><option>Seminar</option><option>Other</option></select>
+            </div>
+          </div>
+          <div class="form-row">
+            <div class="form-group"><label>Date *</label><input id="evDate" type="date" required/></div>
+            <div class="form-group"><label>End Date</label><input id="evEndDate" type="date"/></div>
+          </div>
+          <div class="form-row">
+            <div class="form-group"><label>Location</label><input id="evLocation"/></div>
+            <div class="form-group"><label>Duration</label><input id="evDuration" placeholder="e.g. 3 Days"/></div>
+          </div>
+          <div class="form-group"><label>Description</label><textarea id="evDesc" rows="3"></textarea></div>
+          <div class="form-row">
+            <div class="form-group"><label>Registration Fee (₦)</label><input id="evFee" type="number" placeholder="0"/></div>
+            <div class="form-group"><label>Max Participants</label><input id="evMax" type="number"/></div>
+          </div>
+          <div class="form-group">
+            <label>Event Banner Image</label>
+            <input type="file" id="evImage" accept="image/*"/>
+          </div>
+          <div style="display:flex;gap:10px;margin-top:16px">
+            <button class="btn btn-red" onclick="saveEvent()">Save Event</button>
+            <button class="btn btn-outline-dark" onclick="closeModal('eventModal')">Cancel</button>
+          </div>
+          <div id="evResult" class="form-result"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ===== NEWS ===== -->
+    <div class="admin-section" id="section-news">
+      <div class="section-toolbar">
+        <button class="btn btn-red" onclick="openNewsModal()">+ Publish News</button>
+      </div>
+      <div id="newsAdminList"><div class="loading-msg">Loading...</div></div>
+      <div id="newsModal" class="modal" style="display:none">
+        <div class="modal-box wide">
+          <h3>Publish News / Announcement</h3>
+          <div class="form-group"><label>Title *</label><input id="newsTitle" required/></div>
+          <div class="form-row">
+            <div class="form-group"><label>Category</label>
+              <select id="newsCat"><option>Announcement</option><option>Circular</option><option>Directive</option><option>Training</option><option>Achievement</option><option>Community</option></select>
+            </div>
+            <div class="form-group"><label>Published</label>
+              <select id="newsPublished"><option value="true">Yes — visible to public</option><option value="false">No — save as draft</option></select>
+            </div>
+          </div>
+          <div class="form-group"><label>Summary (shown on cards)</label><input id="newsSummary"/></div>
+          <div class="form-group"><label>Full Content</label><textarea id="newsContent" rows="6"></textarea></div>
+          <div class="form-group"><label>Featured Image</label><input type="file" id="newsImage" accept="image/*"/></div>
+          <div style="display:flex;gap:10px;margin-top:16px">
+            <button class="btn btn-red" onclick="saveNews()">Publish</button>
+            <button class="btn btn-outline-dark" onclick="closeModal('newsModal')">Cancel</button>
+          </div>
+          <div id="newsResult" class="form-result"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ===== GALLERY ===== -->
+    <div class="admin-section" id="section-gallery">
+      <div class="section-toolbar">
+        <button class="btn btn-red" onclick="openGalleryModal()">+ Upload Photos</button>
+      </div>
+      <div class="gallery-grid" id="galleryAdminGrid"></div>
+      <div id="galleryModal" class="modal" style="display:none">
+        <div class="modal-box">
+          <h3>Upload to Gallery</h3>
+          <div class="form-group"><label>Caption</label><input id="galCaption"/></div>
+          <div class="form-group"><label>Album/Category</label><input id="galAlbum" placeholder="e.g. Camp Meeting 2025"/></div>
+          <div class="form-group"><label>Photos (select multiple)</label><input type="file" id="galFiles" accept="image/*" multiple/></div>
+          <div style="display:flex;gap:10px;margin-top:16px">
+            <button class="btn btn-red" onclick="uploadGallery()">Upload</button>
+            <button class="btn btn-outline-dark" onclick="closeModal('galleryModal')">Cancel</button>
+          </div>
+          <div id="galResult" class="form-result"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ===== EXCOS ===== -->
+    <div class="admin-section" id="section-excos">
+      <div class="section-toolbar">
+        <button class="btn btn-red" onclick="openExcoModal()">+ Add Exco</button>
+      </div>
+      <div class="cards cols3" id="excosAdminList"></div>
+      <div id="excoModal" class="modal" style="display:none">
+        <div class="modal-box">
+          <h3>Add / Edit Exco</h3>
+          <input type="hidden" id="excoDocId"/>
+          <div class="form-group"><label>Full Name *</label><input id="excoName" required/></div>
+          <div class="form-group"><label>Position / Office *</label><input id="excoPosition" required/></div>
+          <div class="form-group"><label>Rank</label><input id="excoRank" placeholder="e.g. State Commander"/></div>
+          <div class="form-group"><label>Phone</label><input id="excoPhone"/></div>
+          <div class="form-group"><label>Email</label><input id="excoEmail" type="email"/></div>
+          <div class="form-group"><label>Biography</label><textarea id="excoBio" rows="4"></textarea></div>
+          <div class="form-group"><label>Photo</label><input type="file" id="excoPhoto" accept="image/*"/></div>
+          <div class="form-group"><label>Sort Order (1=first)</label><input id="excoOrder" type="number" value="99"/></div>
+          <div style="display:flex;gap:10px;margin-top:16px">
+            <button class="btn btn-red" onclick="saveExco()">Save</button>
+            <button class="btn btn-outline-dark" onclick="closeModal('excoModal')">Cancel</button>
+          </div>
+          <div id="excoResult" class="form-result"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ===== TRAINING MANUALS ===== -->
+    <div class="admin-section" id="section-training">
+      <div class="section-toolbar">
+        <button class="btn btn-red" onclick="openManualModal()">+ Upload Manual</button>
+      </div>
+      <div id="manualsAdminList"></div>
+      <div id="manualModal" class="modal" style="display:none">
+        <div class="modal-box">
+          <h3>Upload Training Manual</h3>
+          <div class="form-group"><label>Title *</label><input id="manTitle" required/></div>
+          <div class="form-group"><label>Category</label>
+            <select id="manCat"><option>Basic Training</option><option>Leadership</option><option>Camp Skills</option><option>Drill</option><option>Bible Study</option><option>Other</option></select>
+          </div>
+          <div class="form-group"><label>Description</label><textarea id="manDesc" rows="3"></textarea></div>
+          <div class="form-group"><label>File (PDF, DOCX, PPT)</label><input type="file" id="manFile" accept=".pdf,.doc,.docx,.ppt,.pptx,.mp4"/></div>
+          <div class="form-group"><label>Download Permission</label>
+            <select id="manPerm"><option value="all">All Members</option><option value="district_admin">District Admins+</option><option value="state_admin">State Admins only</option></select>
+          </div>
+          <div style="display:flex;gap:10px;margin-top:16px">
+            <button class="btn btn-red" onclick="saveManual()">Upload</button>
+            <button class="btn btn-outline-dark" onclick="closeModal('manualModal')">Cancel</button>
+          </div>
+          <div id="manResult" class="form-result"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ===== PLAN OF WORK ===== -->
+    <div class="admin-section" id="section-activities">
+      <div class="section-toolbar">
+        <button class="btn btn-red" onclick="openActivityModal()">+ Add Activity</button>
+      </div>
+      <div id="activitiesAdminList"></div>
+      <div id="activityModal" class="modal" style="display:none">
+        <div class="modal-box">
+          <h3>Add Activity to Plan of Work</h3>
+          <div class="form-group"><label>Activity Title *</label><input id="actTitle" required/></div>
+          <div class="form-row">
+            <div class="form-group"><label>Month</label>
+              <select id="actMonth"><option value="1">January</option><option value="2">February</option><option value="3">March</option><option value="4">April</option><option value="5">May</option><option value="6">June</option><option value="7">July</option><option value="8">August</option><option value="9">September</option><option value="10">October</option><option value="11">November</option><option value="12">December</option></select>
+            </div>
+            <div class="form-group"><label>Year</label><input id="actYear" type="number" value="2025"/></div>
+          </div>
+          <div class="form-group"><label>Description</label><textarea id="actDesc" rows="3"></textarea></div>
+          <div class="form-group"><label>Responsible Unit</label><input id="actUnit" placeholder="e.g. State Command, Bayelsa North District"/></div>
+          <div style="display:flex;gap:10px;margin-top:16px">
+            <button class="btn btn-red" onclick="saveActivity()">Save</button>
+            <button class="btn btn-outline-dark" onclick="closeModal('activityModal')">Cancel</button>
+          </div>
+          <div id="actResult" class="form-result"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ===== PAYMENTS ===== -->
+    <div class="admin-section" id="section-payments">
+      <h3 style="margin-bottom:16px">Payment Records</h3>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Date</th><th>Member</th><th>Purpose</th><th>Amount</th><th>Reference</th><th>Status</th></tr></thead>
+          <tbody id="paymentsBody"><tr><td colspan="6" class="loading-msg">Loading...</td></tr></tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- ===== NOTIFICATIONS ===== -->
+    <div class="admin-section" id="section-notifications">
+      <div class="section-toolbar">
+        <button class="btn btn-red" onclick="openNotifModal()">+ Send Notification</button>
+      </div>
+      <div id="notifAdminList"></div>
+      <div id="notifModal" class="modal" style="display:none">
+        <div class="modal-box">
+          <h3>Send Notification</h3>
+          <div class="form-group"><label>Title *</label><input id="notifTitle" required/></div>
+          <div class="form-group"><label>Message *</label><textarea id="notifMessage" rows="3" required></textarea></div>
+          <div class="form-group"><label>Send To</label>
+            <select id="notifTarget">
+              <option value="all">All Members (Global)</option>
+              <option value="state_admin">State Admins</option>
+              <option value="district_admin">District Admins</option>
+            </select>
+          </div>
+          <div style="display:flex;gap:10px;margin-top:16px">
+            <button class="btn btn-red" onclick="sendNotification()">Send</button>
+            <button class="btn btn-outline-dark" onclick="closeModal('notifModal')">Cancel</button>
+          </div>
+          <div id="notifResult" class="form-result"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ===== REPORTS ===== -->
+    <div class="admin-section" id="section-reports">
+      <h3 style="margin-bottom:16px">Generate Reports</h3>
+      <div class="cards cols3">
+        <div class="card" style="cursor:pointer" onclick="exportMembersExcel()">
+          <div style="font-size:2rem">&#128196;</div><h3>Members Report (Excel)</h3><p>Full member list with all details</p>
+        </div>
+        <div class="card" style="cursor:pointer" onclick="exportMembersPDF()">
+          <div style="font-size:2rem">&#128196;</div><h3>Members Report (PDF)</h3><p>Printable member register</p>
+        </div>
+        <div class="card" style="cursor:pointer" onclick="exportPaymentsPDF()">
+          <div style="font-size:2rem">&#128178;</div><h3>Financial Report (PDF)</h3><p>Payment history and summary</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- ===== SETTINGS ===== -->
+    <div class="admin-section" id="section-settings">
+      <h3 style="margin-bottom:20px">App Settings</h3>
+      <div class="dash-card" style="max-width:600px">
+        <div class="form-group"><label>Logo URL</label><input id="setLogoUrl" placeholder="https://..."/></div>
+        <div class="form-group"><label>Organisation Name</label><input id="setOrgName"/></div>
+        <div class="form-group"><label>State / Command Name</label><input id="setStateName"/></div>
+        <div class="form-group"><label>Contact Email</label><input id="setEmail" type="email"/></div>
+        <div class="form-group"><label>Contact Phone</label><input id="setPhone"/></div>
+        <div class="form-group"><label>HQ Address</label><input id="setAddress"/></div>
+        <div class="form-group"><label>Paystack Public Key</label><input id="setPaystack"/></div>
+        <div style="margin-top:8px">
+          <button class="btn btn-red" onclick="saveSettings()">Save Settings</button>
+        </div>
+        <div id="settingsResult" class="form-result" style="margin-top:12px"></div>
+
+        <hr style="margin:24px 0"/>
+        <h4>Create Admin Account</h4>
+        <div class="form-group"><label>Email *</label><input id="newAdminEmail" type="email"/></div>
+        <div class="form-group"><label>Role</label>
+          <select id="newAdminRole">
+            <option value="super_admin">Super Admin</option>
+            <option value="state_admin">State Admin</option>
+            <option value="district_admin">District Admin</option>
+            <option value="outpost_admin">Outpost Admin</option>
+          </select>
+        </div>
+        <button class="btn btn-blue" onclick="promoteToAdmin()">Set Admin Role</button>
+        <div id="adminRoleResult" class="form-result" style="margin-top:8px"></div>
+      </div>
+    </div>
+
+  </main>
+</div>
+
+<!-- Add Member Modal -->
+<div id="addMemberModal" class="modal" style="display:none">
+  <div class="modal-box wide">
+    <h3>Add Member Manually</h3>
+    <div class="form-row">
+      <div class="form-group"><label>First Name *</label><input id="amFirst" required/></div>
+      <div class="form-group"><label>Last Name *</label><input id="amLast" required/></div>
+    </div>
+    <div class="form-row">
+      <div class="form-group"><label>Email *</label><input id="amEmail" type="email" required/></div>
+      <div class="form-group"><label>Phone</label><input id="amPhone"/></div>
+    </div>
+    <div class="form-row">
+      <div class="form-group"><label>District</label>
+        <select id="amDistrict"><option>Bayelsa North</option><option>Bayelsa East</option><option>Bayelsa Central</option></select>
+      </div>
+      <div class="form-group"><label>Rank</label>
+        <select id="amRank"><option>Recruit</option><option>Ranger</option><option>Ranger 1st Class</option><option>Gold Ranger</option><option>Commander</option></select>
+      </div>
+    </div>
+    <div class="form-group"><label>Initial Password *</label><input id="amPw" type="password" value="Rangers@2025" required/></div>
+    <div style="display:flex;gap:10px;margin-top:16px">
+      <button class="btn btn-red" onclick="addMemberAdmin()">Create Member</button>
+      <button class="btn btn-outline-dark" onclick="closeModal('addMemberModal')">Cancel</button>
+    </div>
+    <div id="amResult" class="form-result"></div>
+  </div>
+</div>
+
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-storage-compat.js"></script>
+<script src="assets/js/firebase-config.js"></script>
+<script src="assets/js/auth.js"></script>
+<script>
+let adminUser = null, allMembers = [];
+initFirebase();
+
+(async () => {
+  await loadAppConfig();
+  adminUser = await requireAuth("login.html");
+  const adminRoles = ["super_admin","state_admin","district_admin","outpost_admin"];
+  if (!adminRoles.includes(adminUser.role)) {
+    alert("Access denied."); window.location.href = "dashboard.html"; return;
+  }
+  document.getElementById("adminRoleLabel").textContent = adminUser.role.replace(/_/g," ").toUpperCase();
+  document.getElementById("adminName").textContent = adminUser.fullName || adminUser.firstName;
+  document.getElementById("adminAvatar").textContent = ((adminUser.firstName||"A")[0]+(adminUser.lastName||"A")[0]).toUpperCase();
+
+  loadDashboardStats();
+  loadMembersTable();
+  loadPendingApprovals();
+  loadEventsAdmin();
+  loadNewsAdmin();
+  loadGalleryAdmin();
+  loadExcosAdmin();
+  loadManualsAdmin();
+  loadActivitiesAdmin();
+  loadPaymentsAdmin();
+  loadNotifAdmin();
+  loadSettingsForm();
+})();
+
+// Section switcher
+function showSection(s) {
+  document.querySelectorAll(".admin-section").forEach(el => el.classList.remove("active"));
+  document.querySelectorAll(".sn-link").forEach(el => el.classList.remove("active"));
+  document.getElementById("section-"+s).classList.add("active");
+  document.getElementById("sectionTitle").textContent = {
+    dashboard:"Dashboard",members:"Members",approvals:"Pending Approvals",
+    events:"Events",news:"News & Announcements",gallery:"Gallery",excos:"Leadership / Excos",
+    training:"Training Manuals",activities:"Plan of Work",payments:"Payments",
+    notifications:"Notifications",reports:"Reports",settings:"Settings"
+  }[s] || s;
+  event.target.classList.add("active");
+}
+
+// ===== DASHBOARD STATS =====
+async function loadDashboardStats() {
+  const total = (await db.collection("members").get()).size;
+  const active = (await db.collection("members").where("status","==","active").get()).size;
+  const pending = (await db.collection("members").where("status","==","pending").get()).size;
+  const yr = new Date().getFullYear();
+  const evts = (await db.collection("events").where("year","==",yr).get()).size;
+  const pays = (await db.collection("payments").get()).size;
+  const mans = (await db.collection("manuals").get()).size;
+  document.getElementById("dmTotal").textContent = total;
+  document.getElementById("dmActive").textContent = active;
+  document.getElementById("dmPending").textContent = pending;
+  document.getElementById("dmEvents").textContent = evts;
+  document.getElementById("dmPayments").textContent = pays;
+  document.getElementById("dmManuals").textContent = mans;
+  document.getElementById("pendingBadge").textContent = pending;
+
+  // District chart
+  const dists = APP_CONFIG.DISTRICTS;
+  const chartEl = document.getElementById("districtChart");
+  chartEl.innerHTML = "";
+  for (const d of dists) {
+    const c = (await db.collection("members").where("district","==",d).get()).size;
+    const pct = total ? Math.round((c/total)*100) : 0;
+    chartEl.innerHTML += `<div class="chart-bar-row">
+      <span class="cbl">${d}</span>
+      <div class="bar-track"><div class="bar-fill" style="width:${pct}%">${c}</div></div>
+    </div>`;
+  }
+
+  // Recent activity
+  const actSnap = await db.collection("notifications").orderBy("createdAt","desc").limit(8).get();
+  const actEl = document.getElementById("recentActivity");
+  actEl.innerHTML = "";
+  actSnap.forEach(doc => {
+    const d = doc.data();
+    const dt = d.createdAt?.toDate().toLocaleString("en-GB",{day:"numeric",month:"short",hour:"2-digit",minute:"2-digit"})||"";
+    actEl.innerHTML += `<div class="activity-item"><div class="ai-dot">&#128276;</div><div><div class="ai-text">${d.message}</div><div class="ai-time">${dt}</div></div></div>`;
+  });
+}
+
+// ===== MEMBERS =====
+async function loadMembersTable() {
+  const snap = await db.collection("members").orderBy("createdAt","desc").get();
+  allMembers = [];
+  snap.forEach(doc => allMembers.push({ id: doc.id, ...doc.data() }));
+  renderMembersTable(allMembers);
+}
+
+function renderMembersTable(members) {
+  const tbody = document.getElementById("membersBody");
+  if (!members.length) { tbody.innerHTML = "<tr><td colspan='8'>No members found.</td></tr>"; return; }
+  tbody.innerHTML = members.map(m => `
+    <tr>
+      <td><div class="table-avatar">${m.photoURL?`<img src="${m.photoURL}" style="width:32px;height:32px;border-radius:50%;object-fit:cover"/>`:((m.firstName||"?")[0]+(m.lastName||"?")[0]).toUpperCase()}</div></td>
+      <td><strong>${m.membershipID||"—"}</strong></td>
+      <td>${m.fullName||`${m.firstName||""} ${m.lastName||""}`}</td>
+      <td>${m.district||"—"}</td>
+      <td>${m.rank||"—"}</td>
+      <td>${m.phone||"—"}</td>
+      <td><span class="status-badge status-${m.status||'pending'}">${m.status||"pending"}</span></td>
+      <td>
+        <button class="btn-icon" onclick="approveMember('${m.id}')" title="Approve">&#10003;</button>
+        <button class="btn-icon red" onclick="deleteMember('${m.id}','${m.fullName||m.firstName}')" title="Delete">&#128465;</button>
+      </td>
+    </tr>`).join("");
+}
+
+function searchMembers(q) {
+  q = q.toLowerCase();
+  const filtered = allMembers.filter(m =>
+    (m.fullName||"").toLowerCase().includes(q) ||
+    (m.membershipID||"").toLowerCase().includes(q) ||
+    (m.district||"").toLowerCase().includes(q) ||
+    (m.phone||"").includes(q)
+  );
+  renderMembersTable(filtered);
+}
+
+function filterMembers() {
+  const status = document.getElementById("memberFilterStatus").value;
+  const district = document.getElementById("memberFilterDistrict").value;
+  const filtered = allMembers.filter(m =>
+    (!status || m.status === status) &&
+    (!district || m.district === district)
+  );
+  renderMembersTable(filtered);
+}
+
+async function approveMember(uid) {
+  if (!confirm("Approve this member?")) return;
+  await db.collection("members").doc(uid).update({ status: "active" });
+  await db.collection("notifications").add({
+    type:"approval", title:"Membership Approved",
+    message:"Your Royal Rangers membership has been approved! Welcome to Bayelsa State Command.",
+    userId: uid, global:false, read:false,
+    createdAt: firebase.firestore.FieldValue.serverTimestamp()
+  });
+  loadMembersTable(); loadPendingApprovals(); loadDashboardStats();
+}
+
+async function deleteMember(uid, name) {
+  if (!confirm(`Delete member "${name}"? This cannot be undone.`)) return;
+  await db.collection("members").doc(uid).delete();
+  loadMembersTable(); loadDashboardStats();
+}
+
+// ===== PENDING APPROVALS =====
+async function loadPendingApprovals() {
+  const snap = await db.collection("members").where("status","==","pending").orderBy("createdAt","asc").get();
+  const el = document.getElementById("approvalsList");
+  if (snap.empty) { el.innerHTML = "<p>No pending approvals.</p>"; return; }
+  el.innerHTML = "";
+  snap.forEach(doc => {
+    const m = doc.data();
+    el.innerHTML += `<div class="approval-card">
+      <div class="approval-info">
+        <strong>${m.fullName||m.firstName}</strong> &bull; ${m.membershipID||"—"} &bull; ${m.district||"—"} &bull; ${m.phone||""}
+      </div>
+      <div>
+        <button class="btn btn-red" onclick="approveMember('${doc.id}')">&#10003; Approve</button>
+        <button class="btn btn-outline-dark" onclick="deleteMember('${doc.id}','${m.fullName||m.firstName}')">&#10007; Reject</button>
+      </div>
+    </div>`;
+  });
+}
+
+// ===== EVENTS =====
+let editingEventId = null;
+function openEventModal(id) { editingEventId = id||null; document.getElementById("eventModal").style.display="flex"; }
+
+async function loadEventsAdmin() {
+  const snap = await db.collection("events").orderBy("date","desc").get();
+  const el = document.getElementById("eventsAdminList");
+  el.innerHTML = "";
+  snap.forEach(doc => {
+    const d = doc.data();
+    const dt = d.date?.toDate().toLocaleDateString("en-GB",{day:"numeric",month:"short",year:"numeric"})||"TBA";
+    el.innerHTML += `<div class="event-admin-card">
+      <div><strong>${d.title}</strong> &bull; <span class="event-badge">${d.type||"Event"}</span></div>
+      <div>${dt} &bull; &#128205; ${d.location||"TBA"} &bull; Fee: ₦${(d.fee||0).toLocaleString()}</div>
+      <button class="btn-icon red" onclick="deleteDoc('events','${doc.id}',loadEventsAdmin)">&#128465;</button>
+    </div>`;
+  });
+}
+
+async function saveEvent() {
+  const res = document.getElementById("evResult");
+  res.innerHTML = "Saving...";
+  try {
+    let imageUrl = "";
+    const imgFile = document.getElementById("evImage").files[0];
+    if (imgFile) {
+      const ref = storage.ref(`events/${Date.now()}_${imgFile.name}`);
+      await ref.put(imgFile); imageUrl = await ref.getDownloadURL();
+    }
+    const dateVal = document.getElementById("evDate").value;
+    const data = {
+      title: document.getElementById("evTitle").value.trim(),
+      type: document.getElementById("evType").value,
+      date: firebase.firestore.Timestamp.fromDate(new Date(dateVal)),
+      endDate: document.getElementById("evEndDate").value || "",
+      location: document.getElementById("evLocation").value,
+      duration: document.getElementById("evDuration").value,
+      description: document.getElementById("evDesc").value,
+      fee: parseFloat(document.getElementById("evFee").value)||0,
+      maxParticipants: parseInt(document.getElementById("evMax").value)||0,
+      imageUrl, year: new Date(dateVal).getFullYear(),
+      createdAt: firebase.firestore.FieldValue.serverTimestamp(),
+      createdBy: adminUser.uid
+    };
+    if (editingEventId) await db.collection("events").doc(editingEventId).update(data);
+    else await db.collection("events").add(data);
+    res.innerHTML = '<span class="success-msg">&#10003; Event saved!</span>';
+    loadEventsAdmin(); loadDashboardStats();
+    setTimeout(() => closeModal("eventModal"), 1500);
+  } catch(e) { res.innerHTML = `<span class="error-msg">${e.message}</span>`; }
+}
+
+// ===== NEWS =====
+async function loadNewsAdmin() {
+  const snap = await db.collection("news").orderBy("createdAt","desc").get();
+  const el = document.getElementById("newsAdminList");
+  el.innerHTML = "";
+  snap.forEach(doc => {
+    const d = doc.data();
+    const dt = d.createdAt?.toDate().toLocaleDateString("en-GB")||"";
+    el.innerHTML += `<div class="event-admin-card">
+      <div><strong>${d.title}</strong> &bull; <span class="news-tag">${d.category}</span> &bull; ${d.published?"&#9989; Published":"&#10060; Draft"}</div>
+      <div>${dt}</div>
+      <button class="btn-icon red" onclick="deleteDoc('news','${doc.id}',loadNewsAdmin)">&#128465;</button>
+    </div>`;
+  });
+}
+
+function openNewsModal() { document.getElementById("newsModal").style.display="flex"; }
+
+async function saveNews() {
+  const res = document.getElementById("newsResult");
+  res.innerHTML = "Publishing...";
+  try {
+    let imageUrl = "";
+    const f = document.getElementById("newsImage").files[0];
+    if (f) { const r=storage.ref(`news/${Date.now()}_${f.name}`); await r.put(f); imageUrl=await r.getDownloadURL(); }
+    await db.collection("news").add({
+      title: document.getElementById("newsTitle").value.trim(),
+      category: document.getElementById("newsCat").value,
+      published: document.getElementById("newsPublished").value === "true",
+      summary: document.getElementById("newsSummary").value,
+      content: document.getElementById("newsContent").value,
+      imageUrl,
+      createdAt: firebase.firestore.FieldValue.serverTimestamp(),
+      createdBy: adminUser.uid
+    });
+    res.innerHTML = '<span class="success-msg">&#10003; Published!</span>';
+    loadNewsAdmin(); setTimeout(() => closeModal("newsModal"), 1500);
+  } catch(e) { res.innerHTML = `<span class="error-msg">${e.message}</span>`; }
+}
+
+// ===== GALLERY =====
+async function loadGalleryAdmin() {
+  const snap = await db.collection("gallery").orderBy("createdAt","desc").limit(20).get();
+  const el = document.getElementById("galleryAdminGrid");
+  el.innerHTML = "";
+  snap.forEach(doc => {
+    const d = doc.data();
+    el.innerHTML += `<div class="gallery-item" style="background-image:url('${d.url}');position:relative">
+      <div class="gallery-caption">${d.caption||""}</div>
+      <button class="gallery-delete" onclick="deleteDoc('gallery','${doc.id}',loadGalleryAdmin)">&#10006;</button>
+    </div>`;
+  });
+}
+
+function openGalleryModal() { document.getElementById("galleryModal").style.display="flex"; }
+
+async function uploadGallery() {
+  const res = document.getElementById("galResult");
+  const files = document.getElementById("galFiles").files;
+  if (!files.length) { res.innerHTML='<span class="error-msg">Select at least one file.</span>'; return; }
+  res.innerHTML = `Uploading 0/${files.length}...`;
+  let uploaded = 0;
+  for (const f of files) {
+    const ref = storage.ref(`gallery/${Date.now()}_${f.name}`);
+    await ref.put(f);
+    const url = await ref.getDownloadURL();
+    await db.collection("gallery").add({
+      url, caption: document.getElementById("galCaption").value,
+      album: document.getElementById("galAlbum").value,
+      createdAt: firebase.firestore.FieldValue.serverTimestamp(),
+      uploadedBy: adminUser.uid
+    });
+    res.innerHTML = `Uploading ${++uploaded}/${files.length}...`;
+  }
+  res.innerHTML = '<span class="success-msg">&#10003; Uploaded!</span>';
+  loadGalleryAdmin(); setTimeout(() => closeModal("galleryModal"), 1500);
+}
+
+// ===== EXCOS =====
+async function loadExcosAdmin() {
+  const snap = await db.collection("excos").orderBy("order","asc").get();
+  const el = document.getElementById("excosAdminList");
+  el.innerHTML = "";
+  snap.forEach(doc => {
+    const d = doc.data();
+    el.innerHTML += `<div class="card" style="text-align:center;position:relative">
+      <button class="gallery-delete" onclick="deleteDoc('excos','${doc.id}',loadExcosAdmin)" style="position:absolute;top:8px;right:8px">&#10006;</button>
+      ${d.photoURL?`<img src="${d.photoURL}" style="width:80px;height:80px;border-radius:50%;object-fit:cover;border:3px solid var(--gold);margin-bottom:10px"/>`:`<div class="avatar-initials" style="width:70px;height:70px;margin:0 auto 10px;font-size:1.4rem">${(d.name||"?")[0]}</div>`}
+      <div class="leader-name">${d.name}</div>
+      <div class="leader-rank">${d.position}</div>
+      <button class="btn btn-outline-dark" style="margin-top:8px;font-size:12px" onclick="editExco('${doc.id}')">Edit</button>
+    </div>`;
+  });
+}
+
+function openExcoModal() { document.getElementById("excoDocId").value=""; document.getElementById("excoModal").style.display="flex"; }
+
+async function editExco(id) {
+  const doc = await db.collection("excos").doc(id).get();
+  const d = doc.data();
+  document.getElementById("excoDocId").value = id;
+  document.getElementById("excoName").value = d.name||"";
+  document.getElementById("excoPosition").value = d.position||"";
+  document.getElementById("excoRank").value = d.rank||"";
+  document.getElementById("excoPhone").value = d.phone||"";
+  document.getElementById("excoEmail").value = d.email||"";
+  document.getElementById("excoBio").value = d.biography||"";
+  document.getElementById("excoOrder").value = d.order||99;
+  document.getElementById("excoModal").style.display="flex";
+}
+
+async function saveExco() {
+  const res = document.getElementById("excoResult");
+  res.innerHTML = "Saving...";
+  try {
+    let photoURL = "";
+    const f = document.getElementById("excoPhoto").files[0];
+    if (f) { const r=storage.ref(`excos/${Date.now()}_${f.name}`); await r.put(f); photoURL=await r.getDownloadURL(); }
+    const docId = document.getElementById("excoDocId").value;
+    const data = {
+      name: document.getElementById("excoName").value.trim(),
+      position: document.getElementById("excoPosition").value.trim(),
+      rank: document.getElementById("excoRank").value.trim(),
+      phone: document.getElementById("excoPhone").value.trim(),
+      email: document.getElementById("excoEmail").value.trim(),
+      biography: document.getElementById("excoBio").value.trim(),
+      order: parseInt(document.getElementById("excoOrder").value)||99,
+      updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+    };
+    if (photoURL) data.photoURL = photoURL;
+    if (docId) await db.collection("excos").doc(docId).update(data);
+    else { data.createdAt = firebase.firestore.FieldValue.serverTimestamp(); await db.collection("excos").add(data); }
+    res.innerHTML = '<span class="success-msg">&#10003; Saved!</span>';
+    loadExcosAdmin(); setTimeout(() => closeModal("excoModal"), 1500);
+  } catch(e) { res.innerHTML = `<span class="error-msg">${e.message}</span>`; }
+}
+
+// ===== MANUALS =====
+async function loadManualsAdmin() {
+  const snap = await db.collection("manuals").orderBy("createdAt","desc").get();
+  const el = document.getElementById("manualsAdminList");
+  el.innerHTML = "";
+  snap.forEach(doc => {
+    const d = doc.data();
+    el.innerHTML += `<div class="event-admin-card">
+      <div>&#128196; <strong>${d.title}</strong> &bull; <span class="news-tag">${d.category}</span></div>
+      <div>${d.description||""}</div>
+      <button class="btn-icon red" onclick="deleteDoc('manuals','${doc.id}',loadManualsAdmin)">&#128465;</button>
+    </div>`;
+  });
+}
+
+function openManualModal() { document.getElementById("manualModal").style.display="flex"; }
+
+async function saveManual() {
+  const res = document.getElementById("manResult");
+  const f = document.getElementById("manFile").files[0];
+  if (!f) { res.innerHTML='<span class="error-msg">Please select a file.</span>'; return; }
+  res.innerHTML = "Uploading...";
+  try {
+    const ref = storage.ref(`manuals/${Date.now()}_${f.name}`);
+    await ref.put(f);
+    const fileUrl = await ref.getDownloadURL();
+    await db.collection("manuals").add({
+      title: document.getElementById("manTitle").value.trim(),
+      category: document.getElementById("manCat").value,
+      description: document.getElementById("manDesc").value,
+      fileUrl, fileName: f.name, fileType: f.type,
+      downloadPermission: document.getElementById("manPerm").value,
+      createdAt: firebase.firestore.FieldValue.serverTimestamp(),
+      uploadedBy: adminUser.uid
+    });
+    res.innerHTML = '<span class="success-msg">&#10003; Uploaded!</span>';
+    loadManualsAdmin(); setTimeout(() => closeModal("manualModal"), 1500);
+  } catch(e) { res.innerHTML = `<span class="error-msg">${e.message}</span>`; }
+}
+
+// ===== ACTIVITIES =====
+async function loadActivitiesAdmin() {
+  const snap = await db.collection("activities").orderBy("year","asc").get();
+  const el = document.getElementById("activitiesAdminList");
+  el.innerHTML = "";
+  snap.forEach(doc => {
+    const d = doc.data();
+    const months = ["","Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
+    el.innerHTML += `<div class="event-admin-card">
+      <div><strong>${d.title}</strong> — ${months[d.month]||""} ${d.year||""}</div>
+      <div>${d.unit||""} &bull; ${d.description||""}</div>
+      <button class="btn-icon red" onclick="deleteDoc('activities','${doc.id}',loadActivitiesAdmin)">&#128465;</button>
+    </div>`;
+  });
+}
+
+function openActivityModal() { document.getElementById("activityModal").style.display="flex"; }
+
+async function saveActivity() {
+  const res = document.getElementById("actResult");
+  res.innerHTML = "Saving...";
+  try {
+    await db.collection("activities").add({
+      title: document.getElementById("actTitle").value.trim(),
+      month: parseInt(document.getElementById("actMonth").value),
+      year: parseInt(document.getElementById("actYear").value),
+      description: document.getElementById("actDesc").value,
+      unit: document.getElementById("actUnit").value.trim(),
+      createdAt: firebase.firestore.FieldValue.serverTimestamp()
+    });
+    res.innerHTML = '<span class="success-msg">&#10003; Saved!</span>';
+    loadActivitiesAdmin(); setTimeout(() => closeModal("activityModal"), 1500);
+  } catch(e) { res.innerHTML = `<span class="error-msg">${e.message}</span>`; }
+}
+
+// ===== PAYMENTS =====
+async function loadPaymentsAdmin() {
+  const snap = await db.collection("payments").orderBy("createdAt","desc").limit(50).get();
+  const el = document.getElementById("paymentsBody");
+  if (snap.empty) { el.innerHTML = "<tr><td colspan='6'>No payments yet.</td></tr>"; return; }
+  el.innerHTML = "";
+  snap.forEach(doc => {
+    const d = doc.data();
+    const dt = d.createdAt?.toDate().toLocaleDateString("en-GB")||"";
+    el.innerHTML += `<tr>
+      <td>${dt}</td><td>${d.memberName||"—"}</td><td>${d.purpose||"—"}</td>
+      <td>₦${(d.amount||0).toLocaleString()}</td><td>${d.reference||"—"}</td>
+      <td><span class="status-badge status-${d.status==='success'?'active':'pending'}">${d.status}</span></td>
+    </tr>`;
+  });
+}
+
+// ===== NOTIFICATIONS =====
+async function loadNotifAdmin() {
+  const snap = await db.collection("notifications").orderBy("createdAt","desc").limit(20).get();
+  const el = document.getElementById("notifAdminList");
+  el.innerHTML = "";
+  snap.forEach(doc => {
+    const d = doc.data();
+    const dt = d.createdAt?.toDate().toLocaleDateString("en-GB")||"";
+    el.innerHTML += `<div class="event-admin-card">
+      <div><strong>${d.title}</strong></div>
+      <div>${d.message} — <em>${dt}</em></div>
+      <button class="btn-icon red" onclick="deleteDoc('notifications','${doc.id}',loadNotifAdmin)">&#128465;</button>
+    </div>`;
+  });
+}
+
+function openNotifModal() { document.getElementById("notifModal").style.display="flex"; }
+
+async function sendNotification() {
+  const res = document.getElementById("notifResult");
+  res.innerHTML = "Sending...";
+  try {
+    const target = document.getElementById("notifTarget").value;
+    await db.collection("notifications").add({
+      title: document.getElementById("notifTitle").value.trim(),
+      message: document.getElementById("notifMessage").value.trim(),
+      global: target === "all",
+      targetRole: target === "all" ? null : target,
+      userId: "admins", type:"broadcast", read: false,
+      createdAt: firebase.firestore.FieldValue.serverTimestamp(),
+      sentBy: adminUser.uid
+    });
+    res.innerHTML = '<span class="success-msg">&#10003; Sent!</span>';
+    loadNotifAdmin(); setTimeout(() => closeModal("notifModal"), 1500);
+  } catch(e) { res.innerHTML = `<span class="error-msg">${e.message}</span>`; }
+}
+
+// ===== SETTINGS =====
+function loadSettingsForm() {
+  document.getElementById("setLogoUrl").value = APP_CONFIG.LOGO_URL||"";
+  document.getElementById("setOrgName").value = APP_CONFIG.ORG_NAME||"";
+  document.getElementById("setStateName").value = APP_CONFIG.STATE||"";
+  document.getElementById("setEmail").value = APP_CONFIG.CONTACT_EMAIL||"";
+  document.getElementById("setPhone").value = APP_CONFIG.CONTACT_PHONE||"";
+  document.getElementById("setAddress").value = APP_CONFIG.HQ_ADDRESS||"";
+  document.getElementById("setPaystack").value = APP_CONFIG.PAYSTACK_PUBLIC_KEY||"";
+}
+
+async function saveSettings() {
+  const res = document.getElementById("settingsResult");
+  try {
+    const data = {
+      LOGO_URL: document.getElementById("setLogoUrl").value.trim(),
+      ORG_NAME: document.getElementById("setOrgName").value.trim(),
+      STATE: document.getElementById("setStateName").value.trim(),
+      CONTACT_EMAIL: document.getElementById("setEmail").value.trim(),
+      CONTACT_PHONE: document.getElementById("setPhone").value.trim(),
+      HQ_ADDRESS: document.getElementById("setAddress").value.trim(),
+      PAYSTACK_PUBLIC_KEY: document.getElementById("setPaystack").value.trim()
+    };
+    await db.collection("settings").doc("app_config").set(data, { merge: true });
+    Object.assign(APP_CONFIG, data);
+    res.innerHTML = '<span class="success-msg">&#10003; Settings saved!</span>';
+  } catch(e) { res.innerHTML = `<span class="error-msg">${e.message}</span>`; }
+}
+
+async function promoteToAdmin() {
+  const res = document.getElementById("adminRoleResult");
+  const email = document.getElementById("newAdminEmail").value.trim();
+  const role = document.getElementById("newAdminRole").value;
+  if (!email) { res.innerHTML = '<span class="error-msg">Enter email.</span>'; return; }
+  try {
+    const snap = await db.collection("members").where("email","==",email).limit(1).get();
+    if (snap.empty) { res.innerHTML = '<span class="error-msg">No member found with that email.</span>'; return; }
+    await db.collection("members").doc(snap.docs[0].id).update({ role, status:"active" });
+    res.innerHTML = `<span class="success-msg">&#10003; ${email} is now ${role.replace(/_/g," ")}.</span>`;
+  } catch(e) { res.innerHTML = `<span class="error-msg">${e.message}</span>`; }
+}
+
+// ===== MANUAL MEMBER ADD =====
+function openAddMemberModal() { document.getElementById("addMemberModal").style.display="flex"; }
+async function addMemberAdmin() {
+  const res = document.getElementById("amResult");
+  res.innerHTML = "Creating...";
+  try {
+    const formData = {
+      email: document.getElementById("amEmail").value.trim(),
+      password: document.getElementById("amPw").value,
+      firstName: document.getElementById("amFirst").value.trim(),
+      lastName: document.getElementById("amLast").value.trim(),
+      phone: document.getElementById("amPhone").value.trim(),
+      district: document.getElementById("amDistrict").value,
+      rank: document.getElementById("amRank").value
+    };
+    const { membershipID } = await registerMember(formData, null);
+    await db.collection("members").where("email","==",formData.email).limit(1).get()
+      .then(snap => { if (!snap.empty) return db.collection("members").doc(snap.docs[0].id).update({ status:"active" }); });
+    res.innerHTML = `<span class="success-msg">&#10003; Created! ID: ${membershipID}</span>`;
+    loadMembersTable(); loadDashboardStats();
+  } catch(e) { res.innerHTML = `<span class="error-msg">${e.message}</span>`; }
+}
+
+// ===== EXPORT =====
+async function exportMembersExcel() {
+  const data = allMembers.map(m => ({
+    "Membership ID": m.membershipID||"", "Full Name": m.fullName||"",
+    "Email": m.email||"", "Phone": m.phone||"", "District": m.district||"",
+    "Outpost": m.outpost||"", "Rank": m.rank||"", "Status": m.status||"",
+    "Church": m.church||"", "Joined": m.createdAt?.toDate?.().toLocaleDateString("en-GB")||""
+  }));
+  const ws = XLSX.utils.json_to_sheet(data);
+  const wb = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb, ws, "Members");
+  XLSX.writeFile(wb, `RR_Bayelsa_Members_${new Date().toISOString().slice(0,10)}.xlsx`);
+}
+
+async function exportMembersPDF() {
+  const { jsPDF } = window.jspdf;
+  const doc = new jsPDF();
+  doc.setFontSize(14); doc.setFont(undefined,"bold");
+  doc.text("Royal Rangers — Bayelsa State Command", 105, 15, {align:"center"});
+  doc.setFontSize(10); doc.setFont(undefined,"normal");
+  doc.text(`Member Register — Generated: ${new Date().toLocaleDateString("en-GB")}`, 105, 22, {align:"center"});
+  const rows = allMembers.map(m => [m.membershipID||"", m.fullName||"", m.district||"", m.rank||"", m.status||""]);
+  doc.autoTable({ head:[["ID","Full Name","District","Rank","Status"]], body: rows, startY: 30 });
+  doc.save(`RR_Bayelsa_Members_${new Date().toISOString().slice(0,10)}.pdf`);
+}
+
+async function exportPaymentsPDF() {
+  const snap = await db.collection("payments").orderBy("createdAt","desc").get();
+  const { jsPDF } = window.jspdf;
+  const doc = new jsPDF();
+  doc.text("Royal Rangers Bayelsa — Financial Report", 105, 15, {align:"center"});
+  const rows = [];
+  snap.forEach(d => {
+    const p = d.data();
+    rows.push([p.createdAt?.toDate?.().toLocaleDateString("en-GB")||"", p.memberName||"", p.purpose||"", `₦${(p.amount||0).toLocaleString()}`, p.status||""]);
+  });
+  doc.autoTable({ head:[["Date","Member","Purpose","Amount","Status"]], body:rows, startY:25 });
+  doc.save("RR_Bayelsa_Payments.pdf");
+}
+
+// ===== UTILS =====
+async function deleteDoc(collection, id, reload) {
+  if (!confirm("Delete this record?")) return;
+  await db.collection(collection).doc(id).delete();
+  if (reload) reload();
+}
+
+function closeModal(id) { document.getElementById(id).style.display="none"; }
+function toggleSidebar() { document.getElementById("sidebar").classList.toggle("open"); }
+function toggleMenu() { document.getElementById("navLinks")?.classList.toggle("open"); }
+</script>
+</body>
+</html>

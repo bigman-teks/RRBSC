@@ -1,0 +1,138 @@
+<!-- ============================================================
+     LOGIN.HTML
+     ============================================================ -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/><meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>Login — Royal Rangers Bayelsa</title>
+<link rel="stylesheet" href="css.css"/>
+</head>
+<body class="auth-body">
+<div class="auth-container">
+  <div class="auth-box">
+    <div class="auth-logo">
+      <img class="app-logo" src="" alt="Logo" style="display:none;height:80px;margin-bottom:8px"/>
+      <div class="logo-fallback large">RR</div>
+    </div>
+    <h2>Member Login</h2>
+    <p class="auth-sub app-state">Bayelsa State Command</p>
+
+    <div class="form-tabs">
+      <button class="tab-btn active" onclick="switchTab('member')">Member</button>
+      <button class="tab-btn" onclick="switchTab('admin')">Admin</button>
+    </div>
+
+    <form id="loginForm">
+      <div class="form-group">
+        <label>Email Address</label>
+        <input id="loginEmail" type="email" placeholder="ranger@email.com" required/>
+      </div>
+      <div class="form-group">
+        <label>Password</label>
+        <div class="pw-wrap">
+          <input id="loginPassword" type="password" placeholder="••••••••" required/>
+          <button type="button" class="pw-toggle" onclick="togglePw('loginPassword')">&#128065;</button>
+        </div>
+      </div>
+      <div class="form-row-check">
+        <label><input type="checkbox" id="rememberMe"/> Remember me</label>
+        <a href="#" id="forgotLink" onclick="showForgotModal()">Forgot Password?</a>
+      </div>
+      <div id="loginError" class="error-msg" style="display:none"></div>
+      <button type="submit" class="btn btn-blue btn-full" id="loginBtn">Login</button>
+    </form>
+
+    <p class="auth-switch">Don't have an account? <a href="register.html">Register Now</a></p>
+  </div>
+</div>
+
+<!-- Forgot Password Modal -->
+<div id="forgotModal" class="modal" style="display:none">
+  <div class="modal-box">
+    <h3>Reset Password</h3>
+    <p>Enter your email and we'll send a reset link.</p>
+    <input type="email" id="resetEmail" placeholder="Email Address"/>
+    <div id="resetMsg" style="margin-top:8px;font-size:13px"></div>
+    <div style="display:flex;gap:10px;margin-top:16px">
+      <button class="btn btn-blue" onclick="doReset()">Send Reset Link</button>
+      <button class="btn btn-outline-dark" onclick="closeModal()">Cancel</button>
+    </div>
+  </div>
+</div>
+
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-storage-compat.js"></script>
+<script src="assets/js/firebase-config.js"></script>
+<script src="assets/js/auth.js"></script>
+<script>
+initFirebase();
+loadAppConfig();
+
+// Redirect if already logged in
+auth.onAuthStateChanged(u => { if (u) redirectByRole(); });
+
+document.getElementById("loginForm").addEventListener("submit", async e => {
+  e.preventDefault();
+  const btn = document.getElementById("loginBtn");
+  const errEl = document.getElementById("loginError");
+  errEl.style.display = "none";
+  btn.disabled = true; btn.textContent = "Logging in...";
+  try {
+    const email = document.getElementById("loginEmail").value.trim();
+    const pw = document.getElementById("loginPassword").value;
+    const userData = await loginMember(email, pw);
+    redirectByRole(userData);
+  } catch (err) {
+    errEl.textContent = friendlyError(err.code || err.message);
+    errEl.style.display = "block";
+    btn.disabled = false; btn.textContent = "Login";
+  }
+});
+
+async function redirectByRole(data) {
+  if (!data) data = await getCurrentUserData();
+  if (!data) return;
+  const adminRoles = ["super_admin","state_admin","district_admin","outpost_admin"];
+  window.location.href = adminRoles.includes(data.role) ? "admin.html" : "dashboard.html";
+}
+
+function switchTab(t) {
+  document.querySelectorAll(".tab-btn").forEach(b => b.classList.remove("active"));
+  event.target.classList.add("active");
+}
+
+function togglePw(id) {
+  const el = document.getElementById(id);
+  el.type = el.type === "password" ? "text" : "password";
+}
+
+function showForgotModal() { document.getElementById("forgotModal").style.display = "flex"; }
+function closeModal() { document.getElementById("forgotModal").style.display = "none"; }
+
+async function doReset() {
+  const email = document.getElementById("resetEmail").value;
+  const msg = document.getElementById("resetMsg");
+  try {
+    await resetPassword(email);
+    msg.innerHTML = '<span class="success-msg">&#10003; Reset link sent! Check your email.</span>';
+  } catch(e) {
+    msg.innerHTML = `<span class="error-msg">${friendlyError(e.code)}</span>`;
+  }
+}
+
+function friendlyError(code) {
+  const map = {
+    "auth/user-not-found": "No account found with this email.",
+    "auth/wrong-password": "Incorrect password. Please try again.",
+    "auth/invalid-email": "Please enter a valid email address.",
+    "auth/too-many-requests": "Too many attempts. Please try again later.",
+    "auth/network-request-failed": "Network error. Check your connection."
+  };
+  return map[code] || "An error occurred. Please try again.";
+}
+</script>
+</body>
+</html>

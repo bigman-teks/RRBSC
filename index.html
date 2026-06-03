@@ -1,0 +1,400 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<meta name="description" content="Royal Rangers Bayelsa State Command — Official Website"/>
+<title>Royal Rangers — Bayelsa State Command</title>
+<link rel="manifest" href="manifest.json"/>
+<link rel="icon" href="assets/images/favicon.ico"/>
+<link rel="stylesheet" href="css.css"/>
+</head>
+<body>
+
+<!-- NAV -->
+<nav id="navbar">
+  <div class="nav-inner">
+    <a class="brand" href="index.html">
+      <img class="app-logo nav-logo" src="" alt="Logo" style="height:40px;display:none"/>
+      <div class="logo-fallback">RR</div>
+      <div class="brand-text">
+        <span class="app-name">Royal Rangers</span>
+        <span class="app-state">Bayelsa State Command</span>
+      </div>
+    </a>
+    <div class="nav-links" id="navLinks">
+      <a href="index.html" class="active">Home</a>
+      <a href="excos.html">Leadership</a>
+      <a href="activities.html">Activities</a>
+      <a href="manuals.html">Training</a>
+      <a href="#news-section">News</a>
+      <a href="#gallery-section">Gallery</a>
+      <a href="#contact-section">Contact</a>
+    </div>
+    <div class="nav-actions" id="navActions">
+      <a href="login.html" class="btn btn-outline">Login</a>
+      <a href="register.html" class="btn btn-red">Join Now</a>
+    </div>
+    <button class="hamburger" onclick="toggleMenu()" aria-label="Menu">&#9776;</button>
+  </div>
+</nav>
+
+<!-- HERO -->
+<section class="hero" id="hero">
+  <div class="hero-overlay"></div>
+  <div class="hero-content">
+    <img class="app-logo hero-logo" src="" alt="Royal Rangers Logo" style="display:none;height:100px;margin-bottom:20px"/>
+    <div class="hero-badge">Official Portal</div>
+    <h1>Royal Rangers<br/><span class="gold-text">Bayelsa State Command</span></h1>
+    <p>Building men of character, faith, and leadership — one ranger at a time.<br/>Serving God, Church, and Community across Bayelsa State.</p>
+    <div class="hero-btns">
+      <a href="register.html" class="btn btn-gold">Join the Rangers</a>
+      <a href="login.html" class="btn btn-outline-white">Member Portal</a>
+    </div>
+    <div class="hero-stats" id="heroStats">
+      <div class="hero-stat"><div class="num" id="statMembers">—</div><div class="lbl">Active Members</div></div>
+      <div class="hero-stat"><div class="num" id="statDistricts">3</div><div class="lbl">Districts</div></div>
+      <div class="hero-stat"><div class="num" id="statOutposts">—</div><div class="lbl">Outposts</div></div>
+      <div class="hero-stat"><div class="num" id="statEvents">—</div><div class="lbl">Events This Year</div></div>
+    </div>
+  </div>
+</section>
+
+<!-- QUICK LINKS -->
+<section class="quick-links">
+  <div class="container">
+    <div class="ql-grid">
+      <a href="register.html" class="ql-card" style="--accent:var(--red)">
+        <div class="ql-icon">&#128100;</div>
+        <h3>Member Registration</h3>
+        <p>Join the Rangers family</p>
+      </a>
+      <a href="activities.html" class="ql-card" style="--accent:var(--blue)">
+        <div class="ql-icon">&#128197;</div>
+        <h3>Events & Activities</h3>
+        <p>Camps, training & jamborees</p>
+      </a>
+      <a href="#news-section" class="ql-card" style="--accent:var(--gold)">
+        <div class="ql-icon">&#128240;</div>
+        <h3>News & Circulars</h3>
+        <p>Latest state announcements</p>
+      </a>
+      <a href="manuals.html" class="ql-card" style="--accent:#27AE60">
+        <div class="ql-icon">&#127891;</div>
+        <h3>Training Center</h3>
+        <p>Manuals, courses & resources</p>
+      </a>
+    </div>
+  </div>
+</section>
+
+<!-- ABOUT -->
+<section class="about-section">
+  <div class="container about-grid">
+    <div class="about-image-box">
+      <img class="app-logo" src="" alt="Royal Rangers" style="display:none;max-height:200px"/>
+      <div class="about-icon-fallback">&#9876;</div>
+      <div class="about-text-overlay">
+        <p>"Ready for Service"</p>
+        <span>Ranger Motto</span>
+      </div>
+    </div>
+    <div class="about-content">
+      <div class="section-label">About Us</div>
+      <h2>About Royal Rangers</h2>
+      <p>Royal Rangers is a mentoring program for future men rooted in Christian values. Founded on the model of Jesus Christ — who grew in wisdom, stature, and in favour with God and man — we help boys and young men grow spiritually, mentally, socially, and physically.</p>
+      <div class="value-list">
+        <div class="value-item"><div class="v-icon red">&#10011;</div><div><strong>Spiritual Growth</strong><p>Building faith in Christ and strong Christian values</p></div></div>
+        <div class="value-item"><div class="v-icon blue">&#127941;</div><div><strong>Leadership Development</strong><p>Training future leaders for church and society</p></div></div>
+        <div class="value-item"><div class="v-icon gold">&#129309;</div><div><strong>Community Service</strong><p>Serving God, Church, and our local communities</p></div></div>
+      </div>
+      <a href="excos.html" class="btn btn-blue" style="margin-top:20px;display:inline-block">Meet Our Leadership</a>
+    </div>
+  </div>
+</section>
+
+<!-- NEWS -->
+<section class="news-section" id="news-section">
+  <div class="container">
+    <div class="section-title">
+      <h2>Latest News & Announcements</h2>
+      <div class="line"></div>
+      <p>Stay informed with updates from Bayelsa State Command</p>
+    </div>
+    <div class="news-grid" id="newsGrid">
+      <div class="loading-msg">Loading news...</div>
+    </div>
+    <div style="text-align:center;margin-top:24px">
+      <button class="btn btn-outline-dark" id="loadMoreNews">Load More</button>
+    </div>
+  </div>
+</section>
+
+<!-- EVENTS -->
+<section class="events-section">
+  <div class="container">
+    <div class="section-title">
+      <h2>Upcoming Events</h2>
+      <div class="line"></div>
+    </div>
+    <div class="events-list" id="eventsList">
+      <div class="loading-msg">Loading events...</div>
+    </div>
+    <div style="text-align:center;margin-top:24px">
+      <a href="activities.html" class="btn btn-blue">View All Events</a>
+    </div>
+  </div>
+</section>
+
+<!-- STATS -->
+<section class="stats-section">
+  <div class="container">
+    <div class="stats-grid">
+      <div class="stat-card"><div class="num" id="stat2Members">—</div><div class="lbl">Total Members</div></div>
+      <div class="stat-card"><div class="num" id="stat2Outposts">—</div><div class="lbl">Active Outposts</div></div>
+      <div class="stat-card"><div class="num">3</div><div class="lbl">Districts</div></div>
+      <div class="stat-card"><div class="num" id="stat2Events">—</div><div class="lbl">Events This Year</div></div>
+    </div>
+  </div>
+</section>
+
+<!-- GALLERY -->
+<section class="gallery-section" id="gallery-section">
+  <div class="container">
+    <div class="section-title">
+      <h2>Photo Gallery</h2>
+      <div class="line"></div>
+    </div>
+    <div class="gallery-grid" id="galleryGrid">
+      <div class="loading-msg">Loading gallery...</div>
+    </div>
+  </div>
+</section>
+
+<!-- CONTACT -->
+<section class="contact-section" id="contact-section">
+  <div class="container">
+    <div class="section-title">
+      <h2>Contact Us</h2>
+      <div class="line"></div>
+    </div>
+    <div class="contact-grid">
+      <div class="contact-info">
+        <div class="ci-item"><div class="ci-icon">&#128205;</div><div><strong>Office Address</strong><p id="cfgAddress">Loading...</p></div></div>
+        <div class="ci-item"><div class="ci-icon">&#128222;</div><div><strong>Phone</strong><p id="cfgPhone">Loading...</p></div></div>
+        <div class="ci-item"><div class="ci-icon">&#9993;</div><div><strong>Email</strong><p id="cfgEmail">Loading...</p></div></div>
+      </div>
+      <form class="contact-form" id="contactForm">
+        <div class="form-row">
+          <input name="firstName" placeholder="First Name" required/>
+          <input name="lastName" placeholder="Last Name" required/>
+        </div>
+        <input name="email" type="email" placeholder="Email Address" required/>
+        <input name="phone" placeholder="Phone Number"/>
+        <select name="subject">
+          <option value="">Select Subject</option>
+          <option>General Inquiry</option>
+          <option>Membership</option>
+          <option>Training</option>
+          <option>Events</option>
+          <option>Other</option>
+        </select>
+        <textarea name="message" placeholder="Your message..." rows="5" required></textarea>
+        <button type="submit" class="btn btn-blue" style="width:100%">Send Message</button>
+        <div id="contactResult" class="form-result"></div>
+      </form>
+    </div>
+  </div>
+</section>
+
+<!-- FOOTER -->
+<footer>
+  <div class="footer-inner">
+    <div class="footer-brand">
+      <img class="app-logo" src="" alt="Royal Rangers" style="display:none;height:60px;margin-bottom:12px"/>
+      <div class="footer-title">&#9876; Royal Rangers</div>
+      <div class="footer-sub app-state">Bayelsa State Command</div>
+      <p>Building men of character, courage and integrity for God, Church and Community.</p>
+    </div>
+    <div>
+      <h4>Quick Links</h4>
+      <ul>
+        <li><a href="index.html">Home</a></li>
+        <li><a href="excos.html">Leadership</a></li>
+        <li><a href="activities.html">Events</a></li>
+        <li><a href="manuals.html">Training</a></li>
+        <li><a href="members.html">Members</a></li>
+      </ul>
+    </div>
+    <div>
+      <h4>Membership</h4>
+      <ul>
+        <li><a href="register.html">Register</a></li>
+        <li><a href="login.html">Member Login</a></li>
+        <li><a href="profile.html">My Profile</a></li>
+        <li><a href="dashboard.html">Dashboard</a></li>
+      </ul>
+    </div>
+    <div>
+      <h4>Contact</h4>
+      <ul>
+        <li id="footerAddress">Yenagoa, Bayelsa State</li>
+        <li id="footerPhone">+234 800 000 0000</li>
+        <li id="footerEmail">info@rrbayelsa.org</li>
+      </ul>
+    </div>
+  </div>
+  <div class="footer-bottom">
+    &copy; <span id="yr"></span> Royal Rangers Bayelsa State Command. All Rights Reserved. | Assemblies of God Nigeria
+  </div>
+</footer>
+
+<!-- Firebase SDKs -->
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-storage-compat.js"></script>
+<script src="assets/js/firebase-config.js"></script>
+<script src="assets/js/auth.js"></script>
+<script src="assets/js/app.js"></script>
+<script>
+document.getElementById("yr").textContent = new Date().getFullYear();
+
+document.addEventListener("DOMContentLoaded", async () => {
+  initFirebase();
+  await loadAppConfig();
+
+  // Update contact info
+  document.getElementById("cfgAddress").textContent = APP_CONFIG.HQ_ADDRESS;
+  document.getElementById("cfgPhone").textContent = APP_CONFIG.CONTACT_PHONE;
+  document.getElementById("cfgEmail").textContent = APP_CONFIG.CONTACT_EMAIL;
+  document.getElementById("footerAddress").textContent = APP_CONFIG.HQ_ADDRESS;
+  document.getElementById("footerPhone").textContent = APP_CONFIG.CONTACT_PHONE;
+  document.getElementById("footerEmail").textContent = APP_CONFIG.CONTACT_EMAIL;
+
+  // Auth nav
+  auth.onAuthStateChanged(user => {
+    if (user) {
+      document.getElementById("navActions").innerHTML = `
+        <a href="dashboard.html" class="btn btn-outline">Dashboard</a>
+        <button class="btn btn-red" onclick="signOut()">Logout</button>`;
+    }
+  });
+
+  // Load stats
+  loadHomeStats();
+  loadLatestNews();
+  loadUpcomingEvents();
+  loadGallery();
+});
+
+async function loadHomeStats() {
+  const snap = await db.collection("members").where("status","==","active").get();
+  const total = snap.size;
+  document.getElementById("statMembers").textContent = total.toLocaleString();
+  document.getElementById("stat2Members").textContent = total.toLocaleString();
+
+  const outSnap = await db.collectionGroup("outposts").get();
+  document.getElementById("statOutposts").textContent = outSnap.size;
+  document.getElementById("stat2Outposts").textContent = outSnap.size;
+
+  const yr = new Date().getFullYear();
+  const evSnap = await db.collection("events")
+    .where("year","==",yr).get();
+  document.getElementById("statEvents").textContent = evSnap.size;
+  document.getElementById("stat2Events").textContent = evSnap.size;
+}
+
+async function loadLatestNews() {
+  const snap = await db.collection("news")
+    .where("published","==",true)
+    .orderBy("createdAt","desc")
+    .limit(6).get();
+  const grid = document.getElementById("newsGrid");
+  if (snap.empty) { grid.innerHTML = "<p>No news yet.</p>"; return; }
+  grid.innerHTML = "";
+  snap.forEach(doc => {
+    const d = doc.data();
+    const date = d.createdAt?.toDate().toLocaleDateString("en-GB",{day:"numeric",month:"short",year:"numeric"}) || "";
+    grid.innerHTML += `
+      <div class="news-card">
+        <div class="news-img" style="background-image:url('${d.imageUrl||""}');background-color:var(--blue)">
+          ${!d.imageUrl?"<span class='news-icon'>&#128240;</span>":""}
+        </div>
+        <div class="news-body">
+          <span class="news-tag">${d.category||"Announcement"}</span>
+          <h4>${d.title}</h4>
+          <p>${(d.summary||d.content||"").slice(0,120)}...</p>
+          <div class="news-date">&#128197; ${date}</div>
+        </div>
+      </div>`;
+  });
+}
+
+async function loadUpcomingEvents() {
+  const now = new Date();
+  const snap = await db.collection("events")
+    .where("date",">=", firebase.firestore.Timestamp.fromDate(now))
+    .orderBy("date","asc").limit(5).get();
+  const list = document.getElementById("eventsList");
+  if (snap.empty) { list.innerHTML = "<p>No upcoming events.</p>"; return; }
+  list.innerHTML = "";
+  snap.forEach(doc => {
+    const d = doc.data();
+    const dt = d.date?.toDate();
+    const day = dt?.getDate();
+    const mon = dt?.toLocaleString("en",{month:"short"}).toUpperCase();
+    list.innerHTML += `
+      <div class="event-item">
+        <div class="event-date-box" style="background:${d.color||"var(--red)"}">
+          <div class="day">${day}</div><div class="mon">${mon}</div>
+        </div>
+        <div class="event-info">
+          <h4>${d.title}</h4>
+          <p>&#128205; ${d.location||"TBA"} &nbsp;&#183;&nbsp; ${d.duration||""} &nbsp;
+            <span class="event-badge" style="background:${d.badgeBg||"#FDEDEC"};color:${d.badgeColor||"var(--red)"}">${d.type||"Event"}</span>
+          </p>
+        </div>
+        <a href="activities.html?event=${doc.id}" class="btn btn-red" style="align-self:center">Register</a>
+      </div>`;
+  });
+}
+
+async function loadGallery() {
+  const snap = await db.collection("gallery")
+    .orderBy("createdAt","desc").limit(9).get();
+  const grid = document.getElementById("galleryGrid");
+  if (snap.empty) { grid.innerHTML = "<p>No photos yet.</p>"; return; }
+  grid.innerHTML = "";
+  snap.forEach(doc => {
+    const d = doc.data();
+    grid.innerHTML += `
+      <div class="gallery-item" style="background-image:url('${d.url}')">
+        <div class="gallery-caption">${d.caption||""}</div>
+      </div>`;
+  });
+}
+
+// Contact Form
+document.getElementById("contactForm").addEventListener("submit", async e => {
+  e.preventDefault();
+  const btn = e.target.querySelector("button");
+  btn.disabled = true; btn.textContent = "Sending...";
+  const data = Object.fromEntries(new FormData(e.target));
+  data.createdAt = firebase.firestore.FieldValue.serverTimestamp();
+  try {
+    await db.collection("contact_messages").add(data);
+    document.getElementById("contactResult").innerHTML = '<p class="success-msg">&#10003; Message sent successfully!</p>';
+    e.target.reset();
+  } catch(err) {
+    document.getElementById("contactResult").innerHTML = '<p class="error-msg">Failed to send. Please try again.</p>';
+  }
+  btn.disabled = false; btn.textContent = "Send Message";
+});
+
+function toggleMenu() {
+  document.getElementById("navLinks").classList.toggle("open");
+}
+</script>
+</body>
+</html>

@@ -1,0 +1,418 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/><meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>Events & Activities — Royal Rangers Bayelsa</title>
+<link rel="stylesheet" href="css.css"/>
+<!-- Paystack -->
+<script src="https://js.paystack.co/v1/inline.js"></script>
+</head>
+<body>
+<nav id="navbar">
+  <div class="nav-inner">
+    <a class="brand" href="index.html">
+      <img class="app-logo nav-logo" src="" alt="Logo" style="height:36px;display:none"/>
+      <div class="logo-fallback small">RR</div>
+      <div class="brand-text"><span class="app-name">Royal Rangers</span><span class="app-state">Bayelsa State Command</span></div>
+    </a>
+    <div class="nav-links" id="navLinks">
+      <a href="index.html">Home</a>
+      <a href="excos.html">Leadership</a>
+      <a href="activities.html" class="active">Activities</a>
+      <a href="manuals.html">Training</a>
+      <a href="index.html#contact-section">Contact</a>
+    </div>
+    <div class="nav-actions" id="navActions">
+      <a href="login.html" class="btn btn-outline">Login</a>
+      <a href="register.html" class="btn btn-red">Join Now</a>
+    </div>
+    <button class="hamburger" onclick="toggleMenu()">&#9776;</button>
+  </div>
+</nav>
+
+<div style="background:linear-gradient(135deg,var(--dark),var(--blue));padding:56px 2rem;text-align:center;color:#fff">
+  <div class="hero-badge">Bayelsa State Command</div>
+  <h1 style="margin:10px 0 8px">Events & Activities</h1>
+  <p style="color:rgba(255,255,255,.7)">Camps, Training Programs, Conferences, Jamborees & Plan of Work</p>
+</div>
+
+<!-- TABS -->
+<div style="background:#fff;border-bottom:2px solid var(--border);position:sticky;top:64px;z-index:100">
+  <div class="container" style="display:flex;gap:0">
+    <button class="page-tab active" onclick="switchTab('upcoming',this)">&#128197; Upcoming Events</button>
+    <button class="page-tab" onclick="switchTab('planofwork',this)">&#128218; Plan of Work</button>
+    <button class="page-tab" onclick="switchTab('past',this)">&#128340; Past Events</button>
+  </div>
+</div>
+
+<section>
+  <div class="container">
+
+    <!-- UPCOMING EVENTS -->
+    <div id="tab-upcoming" class="tab-content active">
+      <div style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:24px">
+        <button class="filter-btn active" onclick="filterEvents('all',this)">All</button>
+        <button class="filter-btn" onclick="filterEvents('Camp Meeting',this)">Camp</button>
+        <button class="filter-btn" onclick="filterEvents('Training',this)">Training</button>
+        <button class="filter-btn" onclick="filterEvents('Conference',this)">Conference</button>
+        <button class="filter-btn" onclick="filterEvents('Jamboree',this)">Jamboree</button>
+        <button class="filter-btn" onclick="filterEvents('Seminar',this)">Seminar</button>
+      </div>
+      <div id="upcomingEvents"><div class="loading-msg">Loading events...</div></div>
+    </div>
+
+    <!-- PLAN OF WORK -->
+    <div id="tab-planofwork" class="tab-content">
+      <h3 style="margin-bottom:8px;color:var(--blue)">Annual Plan of Work</h3>
+      <p style="color:var(--muted);font-size:14px;margin-bottom:24px">Yearly calendar of activities for Bayelsa State Command</p>
+      <div id="planOfWork"><div class="loading-msg">Loading plan...</div></div>
+    </div>
+
+    <!-- PAST EVENTS -->
+    <div id="tab-past" class="tab-content">
+      <div id="pastEvents"><div class="loading-msg">Loading past events...</div></div>
+    </div>
+
+  </div>
+</section>
+
+<!-- EVENT DETAIL MODAL -->
+<div id="eventModal" class="modal" style="display:none">
+  <div class="modal-box wide">
+    <div id="eventDetailImg" style="height:180px;background:var(--blue);border-radius:8px;margin-bottom:20px;background-size:cover;background-position:center;display:flex;align-items:center;justify-content:center;color:#fff;font-size:3rem"></div>
+    <div style="display:flex;gap:12px;flex-wrap:wrap;align-items:center;margin-bottom:12px">
+      <span id="eventDetailType" class="event-badge" style="background:#FDEDEC;color:var(--red)"></span>
+      <span id="eventDetailStatus" class="status-badge"></span>
+    </div>
+    <h2 id="eventDetailTitle" style="color:var(--blue);margin-bottom:12px"></h2>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;font-size:13px;margin-bottom:16px">
+      <div><span style="color:var(--muted)">&#128197; Date:</span> <strong id="eventDetailDate"></strong></div>
+      <div><span style="color:var(--muted)">&#128205; Location:</span> <strong id="eventDetailLoc"></strong></div>
+      <div><span style="color:var(--muted)">&#9200; Duration:</span> <strong id="eventDetailDur"></strong></div>
+      <div><span style="color:var(--muted)">&#128178; Fee:</span> <strong id="eventDetailFee"></strong></div>
+    </div>
+    <p id="eventDetailDesc" style="font-size:14px;color:var(--muted);line-height:1.8;margin-bottom:20px"></p>
+
+    <!-- Countdown -->
+    <div id="countdownSection" style="background:var(--light);border-radius:8px;padding:16px;text-align:center;margin-bottom:20px">
+      <div style="font-size:12px;color:var(--muted);margin-bottom:8px;font-weight:600">EVENT COUNTDOWN</div>
+      <div id="countdown" style="font-size:1.6rem;font-weight:700;color:var(--blue);font-family:monospace"></div>
+    </div>
+
+    <!-- Registration Form -->
+    <div id="regSection">
+      <h4 style="margin-bottom:14px">Register for this Event</h4>
+      <div id="regMsg" class="form-result" style="margin-bottom:12px"></div>
+      <div class="form-row">
+        <div class="form-group"><label>Full Name *</label><input id="regName" placeholder="Your full name"/></div>
+        <div class="form-group"><label>Phone *</label><input id="regPhone" placeholder="+234 800 000 0000"/></div>
+      </div>
+      <div class="form-group"><label>Email</label><input id="regEmail" type="email" placeholder="Optional"/></div>
+      <div class="form-group"><label>District</label>
+        <select id="regDistrict">
+          <option>Bayelsa North</option><option>Bayelsa East</option><option>Bayelsa Central</option>
+        </select>
+      </div>
+      <div style="display:flex;gap:10px;margin-top:4px">
+        <button class="btn btn-red" id="registerBtn" onclick="registerForEvent()">Register &amp; Pay</button>
+        <button class="btn btn-outline-dark" onclick="closeModal('eventModal')">Cancel</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<footer style="background:var(--dark);color:rgba(255,255,255,.6);text-align:center;padding:20px;font-size:12px;margin-top:60px">
+  &copy; <span id="yr"></span> Royal Rangers Bayelsa State Command
+</footer>
+
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-storage-compat.js"></script>
+<script src="assets/js/firebase-config.js"></script>
+<script src="assets/js/auth.js"></script>
+<script>
+document.getElementById("yr").textContent = new Date().getFullYear();
+let allUpcoming = [], currentEvent = null, countdownInterval = null;
+
+initFirebase();
+document.addEventListener("DOMContentLoaded", async () => {
+  await loadAppConfig();
+  auth.onAuthStateChanged(async u => {
+    if (u) {
+      const data = await getCurrentUserData();
+      document.getElementById("navActions").innerHTML =
+        `<a href="dashboard.html" class="btn btn-outline">Dashboard</a>
+         <button class="btn btn-red" onclick="signOut()">Logout</button>`;
+      // Pre-fill registration fields
+      if (data) {
+        document.getElementById("regName").value = data.fullName || `${data.firstName} ${data.lastName}`;
+        document.getElementById("regPhone").value = data.phone || "";
+        document.getElementById("regEmail").value = data.email || "";
+      }
+    }
+  });
+
+  // Check for ?event= param
+  const params = new URLSearchParams(window.location.search);
+  const directEventId = params.get("event");
+
+  await Promise.all([loadUpcomingEvents(), loadPlanOfWork(), loadPastEvents()]);
+
+  if (directEventId) {
+    const doc = await db.collection("events").doc(directEventId).get();
+    if (doc.exists) openEventModal(doc.id, doc.data());
+  }
+});
+
+// ===== TABS =====
+function switchTab(name, btn) {
+  document.querySelectorAll(".tab-content").forEach(el => el.classList.remove("active"));
+  document.querySelectorAll(".page-tab").forEach(el => el.classList.remove("active"));
+  document.getElementById("tab-"+name).classList.add("active");
+  btn.classList.add("active");
+}
+
+// ===== UPCOMING EVENTS =====
+async function loadUpcomingEvents() {
+  const now = new Date();
+  const snap = await db.collection("events")
+    .where("date",">=", firebase.firestore.Timestamp.fromDate(now))
+    .orderBy("date","asc").get();
+  allUpcoming = [];
+  snap.forEach(doc => allUpcoming.push({ id: doc.id, ...doc.data() }));
+  renderUpcoming(allUpcoming);
+}
+
+function renderUpcoming(events) {
+  const el = document.getElementById("upcomingEvents");
+  if (!events.length) {
+    el.innerHTML = `<div style="text-align:center;padding:60px;color:var(--muted)">
+      <div style="font-size:3rem;margin-bottom:12px">&#128197;</div>
+      <p>No upcoming events at this time. Check back soon.</p></div>`;
+    return;
+  }
+  el.innerHTML = `<div class="events-grid">${events.map(e => eventCard(e)).join("")}</div>`;
+}
+
+function eventCard(e) {
+  const dt = e.date?.toDate();
+  const day = dt?.getDate() || "—";
+  const mon = dt?.toLocaleString("en",{month:"short"}).toUpperCase() || "—";
+  const fee = e.fee > 0 ? `₦${Number(e.fee).toLocaleString()}` : "Free";
+  return `
+    <div class="ev-card" onclick="openEventModal('${e.id}',${JSON.stringify(e).replace(/'/g,"&#39;")})">
+      <div class="ev-banner" style="${e.imageUrl?`background-image:url('${e.imageUrl}')`:`background:linear-gradient(135deg,var(--blue),var(--dark))`}">
+        <div class="ev-date-badge"><div class="day">${day}</div><div class="mon">${mon}</div></div>
+        <div class="ev-type-badge">${e.type||"Event"}</div>
+      </div>
+      <div class="ev-body">
+        <h4>${e.title}</h4>
+        <p>&#128205; ${e.location||"TBA"} &nbsp;&#183;&nbsp; ${e.duration||""}</p>
+        <div class="ev-footer">
+          <span class="ev-fee">${fee}</span>
+          <button class="btn btn-red" style="font-size:12px;padding:5px 14px">Register</button>
+        </div>
+      </div>
+    </div>`;
+}
+
+function filterEvents(type, btn) {
+  document.querySelectorAll(".filter-btn").forEach(b => b.classList.remove("active"));
+  btn.classList.add("active");
+  const filtered = type === "all" ? allUpcoming : allUpcoming.filter(e => e.type === type);
+  renderUpcoming(filtered);
+}
+
+// ===== PLAN OF WORK =====
+async function loadPlanOfWork() {
+  const snap = await db.collection("activities").orderBy("year","asc").get();
+  const el = document.getElementById("planOfWork");
+  if (snap.empty) { el.innerHTML = "<p style='color:var(--muted)'>Plan of work not yet published.</p>"; return; }
+  const months = ["","January","February","March","April","May","June","July","August","September","October","November","December"];
+  const grouped = {};
+  snap.forEach(doc => {
+    const d = doc.data();
+    const key = `${d.year}-${String(d.month).padStart(2,"0")}`;
+    if (!grouped[key]) grouped[key] = { label: `${months[d.month]||""} ${d.year}`, items: [] };
+    grouped[key].items.push(d);
+  });
+  el.innerHTML = Object.entries(grouped).sort((a,b)=>a[0].localeCompare(b[0])).map(([,g]) => `
+    <div class="pow-month">
+      <div class="pow-month-label">${g.label}</div>
+      <div class="pow-items">
+        ${g.items.map(i=>`
+          <div class="pow-item">
+            <div class="pow-bullet"></div>
+            <div>
+              <div class="pow-title">${i.title}</div>
+              ${i.unit?`<div class="pow-unit">&#128203; ${i.unit}</div>`:""}
+              ${i.description?`<div class="pow-desc">${i.description}</div>`:""}
+            </div>
+          </div>`).join("")}
+      </div>
+    </div>`).join("");
+}
+
+// ===== PAST EVENTS =====
+async function loadPastEvents() {
+  const now = new Date();
+  const snap = await db.collection("events")
+    .where("date","<", firebase.firestore.Timestamp.fromDate(now))
+    .orderBy("date","desc").limit(20).get();
+  const el = document.getElementById("pastEvents");
+  if (snap.empty) { el.innerHTML = "<p style='color:var(--muted)'>No past events recorded.</p>"; return; }
+  el.innerHTML = `<div class="events-grid">${snap.docs.map(doc => {
+    const e = { id: doc.id, ...doc.data() };
+    const dt = e.date?.toDate();
+    const dateStr = dt?.toLocaleDateString("en-GB",{day:"numeric",month:"long",year:"numeric"}) || "TBA";
+    return `<div class="ev-card past-card">
+      <div class="ev-banner" style="${e.imageUrl?`background-image:url('${e.imageUrl}')`:`background:linear-gradient(135deg,var(--muted),var(--dark))`};opacity:.7">
+        <div class="ev-type-badge">Past</div>
+      </div>
+      <div class="ev-body">
+        <h4>${e.title}</h4>
+        <p>&#128197; ${dateStr} &nbsp;&#183;&nbsp; &#128205; ${e.location||"TBA"}</p>
+      </div>
+    </div>`;
+  }).join("")}</div>`;
+}
+
+// ===== EVENT MODAL =====
+function openEventModal(id, e) {
+  if (typeof e === "string") e = JSON.parse(e);
+  currentEvent = { id, ...e };
+
+  const dt = e.date?.toDate ? e.date.toDate() : (e.date?.seconds ? new Date(e.date.seconds*1000) : null);
+  const dateStr = dt?.toLocaleDateString("en-GB",{weekday:"long",day:"numeric",month:"long",year:"numeric"}) || "TBA";
+
+  document.getElementById("eventDetailTitle").textContent = e.title || "Event";
+  document.getElementById("eventDetailType").textContent = e.type || "Event";
+  document.getElementById("eventDetailDate").textContent = dateStr;
+  document.getElementById("eventDetailLoc").textContent = e.location || "TBA";
+  document.getElementById("eventDetailDur").textContent = e.duration || "TBA";
+  document.getElementById("eventDetailFee").textContent = e.fee > 0 ? `₦${Number(e.fee).toLocaleString()}` : "Free";
+  document.getElementById("eventDetailDesc").textContent = e.description || "";
+
+  const banner = document.getElementById("eventDetailImg");
+  if (e.imageUrl) { banner.style.backgroundImage = `url('${e.imageUrl}')`; banner.textContent = ""; }
+  else { banner.style.backgroundImage = "none"; banner.textContent = "📅"; }
+
+  // Countdown
+  if (countdownInterval) clearInterval(countdownInterval);
+  if (dt && dt > new Date()) {
+    document.getElementById("countdownSection").style.display = "block";
+    function updateCountdown() {
+      const diff = dt - new Date();
+      if (diff <= 0) { clearInterval(countdownInterval); document.getElementById("countdown").textContent = "Event has started!"; return; }
+      const days = Math.floor(diff/86400000);
+      const hrs = Math.floor((diff%86400000)/3600000);
+      const mins = Math.floor((diff%3600000)/60000);
+      const secs = Math.floor((diff%60000)/1000);
+      document.getElementById("countdown").textContent = `${days}d ${String(hrs).padStart(2,"0")}h ${String(mins).padStart(2,"0")}m ${String(secs).padStart(2,"0")}s`;
+    }
+    updateCountdown();
+    countdownInterval = setInterval(updateCountdown, 1000);
+  } else {
+    document.getElementById("countdownSection").style.display = "none";
+  }
+
+  document.getElementById("regMsg").innerHTML = "";
+  document.getElementById("eventModal").style.display = "flex";
+}
+
+// ===== REGISTER FOR EVENT =====
+async function registerForEvent() {
+  const btn = document.getElementById("registerBtn");
+  const msgEl = document.getElementById("regMsg");
+  const name = document.getElementById("regName").value.trim();
+  const phone = document.getElementById("regPhone").value.trim();
+  const email = document.getElementById("regEmail").value.trim();
+  const district = document.getElementById("regDistrict").value;
+
+  if (!name || !phone) { msgEl.innerHTML = '<span class="error-msg">Please fill in your name and phone number.</span>'; return; }
+
+  const fee = Number(currentEvent.fee) || 0;
+
+  async function saveRegistration(payRef) {
+    const user = auth.currentUser;
+    await db.collection("events").doc(currentEvent.id).collection("registrations").doc(user?.uid || phone).set({
+      name, phone, email, district,
+      memberId: user?.uid || null,
+      paymentReference: payRef || "free",
+      paymentStatus: fee > 0 ? "paid" : "free",
+      registeredAt: firebase.firestore.FieldValue.serverTimestamp()
+    });
+    // Save payment record
+    if (fee > 0 && payRef) {
+      await db.collection("payments").add({
+        memberName: name, memberId: user?.uid || null,
+        purpose: `Event: ${currentEvent.title}`, amount: fee,
+        reference: payRef, status: "success",
+        createdAt: firebase.firestore.FieldValue.serverTimestamp()
+      });
+    }
+    msgEl.innerHTML = '<span class="success-msg">&#10003; Registration successful! You are registered for this event.</span>';
+    btn.disabled = true; btn.textContent = "Registered ✓";
+  }
+
+  if (fee > 0 && APP_CONFIG.PAYSTACK_PUBLIC_KEY && !APP_CONFIG.PAYSTACK_PUBLIC_KEY.includes("YOUR")) {
+    if (!email) { msgEl.innerHTML = '<span class="error-msg">Email is required for payment.</span>'; return; }
+    btn.disabled = true; btn.textContent = "Opening payment...";
+    const handler = PaystackPop.setup({
+      key: APP_CONFIG.PAYSTACK_PUBLIC_KEY,
+      email, amount: fee * 100,
+      currency: "NGN",
+      ref: `RR-${Date.now()}`,
+      metadata: { name, phone, eventId: currentEvent.id, eventTitle: currentEvent.title },
+      callback: async resp => { await saveRegistration(resp.reference); btn.disabled = false; btn.textContent = "Register & Pay"; },
+      onClose: () => { btn.disabled = false; btn.textContent = "Register & Pay"; msgEl.innerHTML = '<span class="error-msg">Payment cancelled.</span>'; }
+    });
+    handler.openIframe();
+  } else {
+    btn.disabled = true; btn.textContent = "Registering...";
+    try { await saveRegistration(null); } catch(e) { msgEl.innerHTML = `<span class="error-msg">${e.message}</span>`; btn.disabled = false; btn.textContent = "Register & Pay"; }
+  }
+}
+
+function closeModal(id) {
+  document.getElementById(id).style.display = "none";
+  if (countdownInterval) clearInterval(countdownInterval);
+}
+function toggleMenu() { document.getElementById("navLinks").classList.toggle("open"); }
+</script>
+
+<style>
+.page-tab{padding:12px 20px;border:none;background:none;font-size:14px;font-weight:600;color:var(--muted);cursor:pointer;border-bottom:3px solid transparent;transition:.2s}
+.page-tab.active{color:var(--blue);border-color:var(--blue)}
+.tab-content{display:none}.tab-content.active{display:block}
+.filter-btn{padding:7px 16px;border-radius:20px;border:1.5px solid var(--border);background:#fff;font-size:13px;cursor:pointer;transition:.2s;color:var(--text)}
+.filter-btn.active,.filter-btn:hover{background:var(--blue);color:#fff;border-color:var(--blue)}
+
+.events-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:20px}
+.ev-card{background:#fff;border-radius:12px;overflow:hidden;border:1px solid var(--border);box-shadow:var(--shadow);cursor:pointer;transition:.25s}
+.ev-card:hover{transform:translateY(-3px);box-shadow:0 8px 24px rgba(0,0,0,.12)}
+.past-card{opacity:.75}
+.ev-banner{height:160px;background-size:cover;background-position:center;position:relative;display:flex;align-items:flex-end;padding:12px}
+.ev-date-badge{position:absolute;top:12px;left:12px;background:var(--red);color:#fff;border-radius:8px;padding:6px 10px;text-align:center}
+.ev-date-badge .day{font-size:1.4rem;font-weight:700;line-height:1}
+.ev-date-badge .mon{font-size:10px;letter-spacing:1px}
+.ev-type-badge{position:absolute;top:12px;right:12px;background:rgba(0,0,0,.6);color:#fff;font-size:11px;padding:3px 10px;border-radius:20px;font-weight:600}
+.ev-body{padding:16px}
+.ev-body h4{font-size:.95rem;font-weight:700;color:var(--blue);margin-bottom:6px}
+.ev-body p{font-size:12px;color:var(--muted);margin-bottom:12px}
+.ev-footer{display:flex;justify-content:space-between;align-items:center}
+.ev-fee{font-size:14px;font-weight:700;color:var(--red)}
+
+/* Plan of Work */
+.pow-month{margin-bottom:32px}
+.pow-month-label{font-size:.95rem;font-weight:700;color:var(--blue);background:var(--light);padding:8px 16px;border-radius:8px;margin-bottom:12px;display:inline-block}
+.pow-items{display:flex;flex-direction:column;gap:12px}
+.pow-item{display:flex;gap:14px;align-items:flex-start;background:#fff;border:1px solid var(--border);border-radius:8px;padding:14px}
+.pow-bullet{width:10px;height:10px;border-radius:50%;background:var(--gold);flex-shrink:0;margin-top:5px}
+.pow-title{font-size:.95rem;font-weight:700;color:var(--text)}
+.pow-unit{font-size:12px;color:var(--blue);margin-top:3px}
+.pow-desc{font-size:12px;color:var(--muted);margin-top:4px}
+</style>
+</body>
+</html>
