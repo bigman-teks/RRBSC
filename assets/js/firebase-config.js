@@ -4,15 +4,27 @@
 // Firebase Console: https://console.firebase.google.com
 // ============================================================
 
+// Import the functions you need from the SDKs you need
+import { initializeApp } from "firebase/app";
+import { getAnalytics } from "firebase/analytics";
+// TODO: Add SDKs for Firebase products that you want to use
+// https://firebase.google.com/docs/web/setup#available-libraries
+
+// Your web app's Firebase configuration
+// For Firebase JS SDK v7.20.0 and later, measurementId is optional
 const firebaseConfig = {
-  apiKey: "AIzaSyCqYdd5Owp6ZDIzYu2ZFZ6lONtHH7QCHpk",
-  authDomain: "royal-rangers-bayelsa.firebaseapp.com",
-  databaseURL: "https://royal-rangers-bayelsa-default-rtdb.firebaseio.com",
-  projectId: "royal-rangers-bayelsa",
-  storageBucket: "royal-rangers-bayelsa.firebasestorage.app",
-  messagingSenderId: "68712265617",
-  appId: "1:68712265617:web:9e0eedf59fdd4ad7240c30"
+  apiKey: "AIzaSyC3Wm7N7d9ODhWFw7CNNRDGnRypSXEYz5Q",
+  authDomain: "rrbsc-6621f.firebaseapp.com",
+  projectId: "rrbsc-6621f",
+  storageBucket: "rrbsc-6621f.firebasestorage.app",
+  messagingSenderId: "722777354664",
+  appId: "1:722777354664:web:140ad18936fbf512de2d9d",
+  measurementId: "G-K1CVX84T82"
 };
+
+// Initialize Firebase
+const app = initializeApp(firebaseConfig);
+const analytics = getAnalytics(app);
 
 // ============================================================
 // LOGO CONFIGURATION — Admin can update via Admin Settings page
