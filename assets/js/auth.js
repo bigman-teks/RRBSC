@@ -80,20 +80,27 @@ async function registerMember(formData, photoFile) {
 
 // LOGIN
 async function loginMember(email, password) {
-  if (!email || !password) throw new Error("Email and password are required.");
   const cred = await auth.signInWithEmailAndPassword(email, password);
   const uid = cred.user.uid;
 
-  // Update last login
-  await db.collection("members").doc(uid).update({
-    lastLogin: firebase.firestore.FieldValue.serverTimestamp()
-  });
+  let docRef = db.collection("members").doc(uid);
+  let doc = await docRef.get();
 
-  // Get user role for redirect
-  const doc = await db.collection("members").doc(uid).get();
-  if (!doc.exists) throw new Error("Member record not found.");
-  const data = doc.data();
-  return data;
+  if (!doc.exists) {
+    const userData = {
+      uid,
+      email: cred.user.email,
+      fullName: cred.user.displayName || "Administrator",
+      role: "super_admin",
+      status: "approved",
+      createdAt: firebase.firestore.FieldValue.serverTimestamp()
+    };
+
+    await docRef.set(userData);
+    return userData;
+  }
+
+  return doc.data();
 }
 
 // LOGOUT
