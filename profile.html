@@ -1,0 +1,1045 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/><meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>My Profile — Royal Rangers Bayelsa</title>
+<link rel="stylesheet" href="css.css"/>
+<style>
+/* ── Profile-specific styles ── */
+.profile-hero{background:linear-gradient(135deg,var(--dark) 0%,var(--blue) 100%);padding:0 0 0 0;color:#fff;position:relative}
+.profile-cover{height:180px;background:linear-gradient(135deg,var(--blue),#1a3a5c);position:relative;overflow:hidden}
+.profile-cover::after{content:'';position:absolute;inset:0;background:url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='%23ffffff' fill-opacity='0.04'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/svg%3E")}
+.profile-avatar-wrap{position:absolute;bottom:-50px;left:40px;z-index:10}
+.profile-avatar{width:100px;height:100px;border-radius:50%;border:4px solid #fff;background:var(--blue);display:flex;align-items:center;justify-content:center;font-size:2.2rem;font-weight:700;color:#fff;overflow:hidden;cursor:pointer;position:relative}
+.profile-avatar img{width:100%;height:100%;object-fit:cover;border-radius:50%}
+.avatar-edit-overlay{position:absolute;inset:0;background:rgba(0,0,0,.45);border-radius:50%;display:flex;align-items:center;justify-content:center;opacity:0;transition:.2s;font-size:22px}
+.profile-avatar:hover .avatar-edit-overlay{opacity:1}
+.profile-meta-bar{padding:64px 40px 20px;display:flex;justify-content:space-between;align-items:flex-end;flex-wrap:wrap;gap:12px}
+.profile-name{font-size:1.4rem;font-weight:700}
+.profile-sub{font-size:13px;color:var(--gold);margin-top:3px}
+.profile-actions{display:flex;gap:10px}
+
+.profile-body{max-width:1100px;margin:32px auto;padding:0 1.5rem;display:grid;grid-template-columns:320px 1fr;gap:24px;align-items:start}
+.profile-sidebar{}
+.profile-main{}
+
+/* Cards */
+.p-card{background:#fff;border-radius:var(--radius);border:1px solid var(--border);box-shadow:var(--shadow);margin-bottom:16px;overflow:hidden}
+.p-card-header{padding:16px 20px;border-bottom:1px solid var(--border);display:flex;justify-content:space-between;align-items:center}
+.p-card-header h3{font-size:.95rem;font-weight:700;color:var(--blue)}
+.p-card-body{padding:20px}
+
+/* Info rows */
+.info-row{display:flex;justify-content:space-between;padding:10px 0;border-bottom:1px solid #f5f6fa;font-size:13.5px}
+.info-row:last-child{border:none}
+.info-label{color:var(--muted);font-weight:500}
+.info-value{font-weight:600;color:var(--text);text-align:right;max-width:60%}
+
+/* Status pill */
+.member-status-pill{display:inline-flex;align-items:center;gap:6px;padding:4px 12px;border-radius:20px;font-size:12px;font-weight:700;margin-top:6px}
+.pill-active{background:#E9F7EF;color:#1E8449}
+.pill-pending{background:#FDFAE3;color:#9A7D0A}
+.pill-inactive{background:#FDEDEC;color:var(--red)}
+
+/* Membership card mini */
+.mini-card{background:linear-gradient(135deg,var(--blue),#0D2C4A);border-radius:12px;padding:18px;color:#fff;position:relative;overflow:hidden}
+.mini-card::before{content:'';position:absolute;right:-30px;top:-30px;width:120px;height:120px;background:rgba(255,255,255,.05);border-radius:50%}
+.mini-card-org{font-size:9px;font-weight:700;color:var(--gold);letter-spacing:.5px}
+.mini-card-id{font-family:monospace;font-size:11px;color:rgba(255,255,255,.6);float:right}
+.mini-card-name{font-size:1rem;font-weight:700;margin:12px 0 2px}
+.mini-card-rank{font-size:12px;color:var(--gold)}
+.mini-card-footer{display:flex;justify-content:space-between;align-items:flex-end;margin-top:14px;padding-top:12px;border-top:1px solid rgba(255,255,255,.15)}
+.mini-card-detail{font-size:10px}
+.mini-card-detail .lbl{color:rgba(255,255,255,.5)}
+.mini-card-detail .val{font-weight:600;font-size:11px}
+
+/* Progress bar */
+.rank-progress{margin:8px 0}
+.rank-label{display:flex;justify-content:space-between;font-size:12px;color:var(--muted);margin-bottom:6px}
+.rank-bar{height:8px;background:var(--light);border-radius:4px;overflow:hidden}
+.rank-fill{height:100%;border-radius:4px;background:linear-gradient(90deg,var(--blue),var(--gold));transition:width .6s}
+
+/* Certification badges */
+.cert-badge{display:inline-flex;align-items:center;gap:6px;background:#E9F7EF;color:#1E8449;border:1px solid #A9DFBF;border-radius:20px;padding:4px 12px;font-size:12px;font-weight:600;margin:4px}
+
+/* Edit form */
+.edit-form-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+.edit-form-grid .full-width{grid-column:span 2}
+.form-group label{display:block;font-size:12px;font-weight:600;color:var(--muted);margin-bottom:5px;text-transform:uppercase;letter-spacing:.4px}
+.form-group input,.form-group select,.form-group textarea{width:100%;padding:10px 13px;border:1.5px solid var(--border);border-radius:8px;font-size:14px;font-family:inherit;color:var(--text);transition:.2s}
+.form-group input:focus,.form-group select:focus{outline:none;border-color:var(--blue)}
+.form-group input:read-only{background:var(--light);cursor:not-allowed;color:var(--muted)}
+
+/* Password section */
+.pw-strength{height:4px;border-radius:2px;margin-top:6px;transition:all .3s}
+.pw-hint{font-size:11px;color:var(--muted);margin-top:4px}
+
+/* Tabs inside profile */
+.profile-tabs{display:flex;border-bottom:2px solid var(--border);margin-bottom:20px}
+.p-tab{padding:10px 18px;font-size:13.5px;font-weight:600;cursor:pointer;color:var(--muted);border:none;background:none;border-bottom:3px solid transparent;margin-bottom:-2px;transition:.2s}
+.p-tab.active{color:var(--blue);border-color:var(--blue)}
+.p-tab-content{display:none}
+.p-tab-content.active{display:block}
+
+/* Attendance table */
+.att-row{display:flex;justify-content:space-between;align-items:center;padding:10px 0;border-bottom:1px solid #f5f6fa;font-size:13px}
+.att-row:last-child{border:none}
+.att-event{font-weight:600;color:var(--text)}
+.att-date{color:var(--muted);font-size:12px}
+.att-badge{font-size:11px;padding:2px 10px;border-radius:20px;font-weight:600}
+
+/* Notification toast */
+.toast{position:fixed;bottom:24px;right:24px;background:var(--text);color:#fff;padding:12px 20px;border-radius:10px;font-size:13px;z-index:9999;opacity:0;transform:translateY(20px);transition:.3s;pointer-events:none}
+.toast.show{opacity:1;transform:translateY(0)}
+.toast.success{background:#1E8449}
+.toast.error{background:var(--red)}
+
+/* ── Appointments ── */
+.position-current-card{display:flex;align-items:flex-start;gap:16px;background:linear-gradient(135deg,#EBF5FB,#D6EAF8);border-radius:12px;padding:18px;border:1.5px solid #AED6F1}
+.pc-badge{width:48px;height:48px;background:var(--blue);border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:22px;flex-shrink:0}
+.pc-info{flex:1}
+.pc-title{font-size:1rem;font-weight:700;color:var(--blue);margin-bottom:3px}
+.pc-unit{font-size:13px;color:var(--muted);margin-bottom:4px}
+.pc-since{font-size:12px;color:var(--muted)}
+
+.appt-row{display:flex;gap:14px;padding:14px 0;border-bottom:1px solid #f5f6fa;align-items:flex-start}
+.appt-row:last-child{border:none}
+.appt-icon-wrap{display:flex;flex-direction:column;align-items:center;flex-shrink:0}
+.appt-icon{width:36px;height:36px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:16px;flex-shrink:0}
+.appt-active{background:#EBF5FB;color:var(--blue);border:2px solid var(--blue)}
+.appt-past{background:var(--light);color:var(--muted);border:2px solid var(--border)}
+.appt-line{width:2px;flex:1;min-height:20px;background:var(--border);margin:4px auto 0}
+.appt-content{flex:1}
+.appt-title{font-size:.95rem;font-weight:700;color:var(--text);margin-bottom:2px}
+.appt-unit{font-size:13px;color:var(--blue);margin-bottom:3px}
+.appt-dates{font-size:12px;color:var(--muted);margin-bottom:2px}
+.appt-by{font-size:12px;color:var(--muted)}
+
+.position-chip{display:inline-flex;align-items:center;gap:5px;background:#EBF5FB;color:var(--blue);border:1px solid #AED6F1;border-radius:20px;padding:5px 14px;font-size:13px;font-weight:600}
+
+@media(max-width:900px){
+  .profile-body{grid-template-columns:1fr}
+  .profile-avatar-wrap{left:20px}
+  .profile-meta-bar{padding:64px 20px 20px}
+  .edit-form-grid{grid-template-columns:1fr}
+  .edit-form-grid .full-width{grid-column:span 1}
+}
+</style>
+</head>
+<body>
+
+<!-- NAV -->
+<nav id="navbar">
+  <div class="nav-inner">
+    <a class="brand" href="index.html">
+      <img class="app-logo nav-logo" src="" alt="Logo" style="height:36px;display:none"/>
+      <div class="logo-fallback small">RR</div>
+      <div class="brand-text">
+        <span class="app-name">Royal Rangers</span>
+        <span class="app-state">Bayelsa State Command</span>
+      </div>
+    </a>
+    <div class="nav-links" id="navLinks">
+      <a href="index.html">Home</a>
+      <a href="dashboard.html">Dashboard</a>
+      <a href="profile.html" class="active">My Profile</a>
+      <a href="activities.html">Events</a>
+      <a href="manuals.html">Training</a>
+      <a href="notifications.html">&#128276; <span class="notif-badge" id="notifCount" style="display:none">0</span></a>
+    </div>
+    <div class="nav-actions">
+      <button class="btn btn-red" onclick="signOut()">Logout</button>
+    </div>
+    <button class="hamburger" onclick="document.getElementById('navLinks').classList.toggle('open')">&#9776;</button>
+  </div>
+</nav>
+
+<!-- PROFILE HERO -->
+<div class="profile-hero">
+  <div class="profile-cover" id="profileCover">
+    <div class="profile-avatar-wrap">
+      <div class="profile-avatar" id="profileAvatarEl" onclick="document.getElementById('photoInput').click()" title="Click to change photo">
+        <span id="profileInitials">--</span>
+        <div class="avatar-edit-overlay">&#128247;</div>
+      </div>
+      <input type="file" id="photoInput" accept="image/*" style="display:none" onchange="handlePhotoUpload(this)"/>
+    </div>
+  </div>
+  <div class="profile-meta-bar">
+    <div>
+      <div class="profile-name" id="heroName">Loading...</div>
+      <div class="profile-sub" id="heroMeta">—</div>
+      <div id="heroStatus"></div>
+    </div>
+    <div class="profile-actions">
+      <button class="btn btn-outline" onclick="switchProfileTab('edit')">&#9998; Edit Profile</button>
+      <a href="dashboard.html" class="btn btn-gold">&#128202; Dashboard</a>
+    </div>
+  </div>
+</div>
+
+<!-- PROFILE BODY -->
+<div class="profile-body">
+
+  <!-- SIDEBAR -->
+  <div class="profile-sidebar">
+
+    <!-- Mini Membership Card -->
+    <div class="p-card">
+      <div class="p-card-header"><h3>&#127939; Membership Card</h3></div>
+      <div class="p-card-body" style="padding:0">
+        <div class="mini-card" id="miniCard">
+          <div>
+            <span class="mini-card-org">&#9876; ROYAL RANGERS — BAYELSA STATE COMMAND</span>
+            <span class="mini-card-id" id="mcID">—</span>
+          </div>
+          <div class="mini-card-name" id="mcName">—</div>
+          <div class="mini-card-rank" id="mcRank">—</div>
+          <div class="mini-card-footer">
+            <div class="mini-card-detail"><div class="lbl">District</div><div class="val" id="mcDistrict">—</div></div>
+            <div class="mini-card-detail"><div class="lbl">Outpost</div><div class="val" id="mcOutpost">—</div></div>
+            <div class="mini-card-detail"><div class="lbl">Valid</div><div class="val" id="mcValid">—</div></div>
+          </div>
+        </div>
+        <div style="padding:12px">
+          <a href="dashboard.html" class="btn btn-blue" style="width:100%;display:block;text-align:center;font-size:13px">&#8659; Download Full Card (PDF)</a>
+        </div>
+      </div>
+    </div>
+
+    <!-- Rank Progress -->
+    <div class="p-card">
+      <div class="p-card-header"><h3>&#127941; Rank Progress</h3></div>
+      <div class="p-card-body">
+        <div style="font-size:.9rem;font-weight:700;color:var(--blue);margin-bottom:4px" id="rankDisplay">—</div>
+        <div class="rank-progress">
+          <div class="rank-label"><span>Current</span><span id="rankNext">—</span></div>
+          <div class="rank-bar"><div class="rank-fill" id="rankFill" style="width:0%"></div></div>
+        </div>
+        <div style="font-size:12px;color:var(--muted);margin-top:8px" id="rankHint"></div>
+      </div>
+    </div>
+
+    <!-- Quick Stats -->
+    <div class="p-card">
+      <div class="p-card-header"><h3>&#128202; Quick Stats</h3></div>
+      <div class="p-card-body" style="padding:0">
+        <div class="info-row" style="padding:10px 20px"><span class="info-label">Certifications</span><span class="info-value" id="statCerts">—</span></div>
+        <div class="info-row" style="padding:10px 20px"><span class="info-label">Events Attended</span><span class="info-value" id="statEvents">—</span></div>
+        <div class="info-row" style="padding:10px 20px"><span class="info-label">Training Records</span><span class="info-value" id="statTraining">—</span></div>
+        <div class="info-row" style="padding:10px 20px"><span class="info-label">Member Since</span><span class="info-value" id="statSince">—</span></div>
+        <div class="info-row" style="padding:10px 20px"><span class="info-label">Last Active</span><span class="info-value" id="statLast">—</span></div>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- MAIN CONTENT -->
+  <div class="profile-main">
+
+    <!-- Tabs -->
+    <div class="profile-tabs">
+      <button class="p-tab active" onclick="switchProfileTab('info',this)">&#128100; Personal Info</button>
+      <button class="p-tab" onclick="switchProfileTab('edit',this)">&#9998; Edit Profile</button>
+      <button class="p-tab" onclick="switchProfileTab('security',this)">&#128274; Security</button>
+      <button class="p-tab" onclick="switchProfileTab('certs',this)">&#127891; Certifications</button>
+      <button class="p-tab" onclick="switchProfileTab('attendance',this)">&#9989; Attendance</button>
+      <button class="p-tab" onclick="switchProfileTab('appointments',this)">&#127381; Appointments</button>
+    </div>
+
+    <!-- INFO TAB -->
+    <div class="p-tab-content active" id="tab-info">
+      <div class="p-card">
+        <div class="p-card-header"><h3>Personal Information</h3></div>
+        <div class="p-card-body">
+          <div class="info-row"><span class="info-label">Full Name</span><span class="info-value" id="iFullName">—</span></div>
+          <div class="info-row"><span class="info-label">Date of Birth</span><span class="info-value" id="iDob">—</span></div>
+          <div class="info-row"><span class="info-label">Gender</span><span class="info-value" id="iGender">—</span></div>
+          <div class="info-row"><span class="info-label">Phone Number</span><span class="info-value" id="iPhone">—</span></div>
+          <div class="info-row"><span class="info-label">Email Address</span><span class="info-value" id="iEmail">—</span></div>
+          <div class="info-row"><span class="info-label">Residential Address</span><span class="info-value" id="iAddress">—</span></div>
+        </div>
+      </div>
+      <div class="p-card">
+        <div class="p-card-header"><h3>Rangers Information</h3></div>
+        <div class="p-card-body">
+          <div class="info-row"><span class="info-label">Membership ID</span><span class="info-value" id="iMemberID">—</span></div>
+          <div class="info-row"><span class="info-label">Current Rank</span><span class="info-value" id="iRank">—</span></div>
+          <div class="info-row"><span class="info-label">District</span><span class="info-value" id="iDistrict">—</span></div>
+          <div class="info-row"><span class="info-label">Zone</span><span class="info-value" id="iZone">—</span></div>
+          <div class="info-row"><span class="info-label">Outpost</span><span class="info-value" id="iOutpost">—</span></div>
+          <div class="info-row"><span class="info-label">Local Church</span><span class="info-value" id="iChurch">—</span></div>
+          <div class="info-row"><span class="info-label">Account Status</span>
+            <span class="info-value"><span id="iStatus" class="member-status-pill"></span></span>
+          </div>
+        </div>
+      </div>
+      <div class="p-card">
+        <div class="p-card-header"><h3>Emergency Contact</h3></div>
+        <div class="p-card-body">
+          <div class="info-row"><span class="info-label">Contact Name</span><span class="info-value" id="iEcName">—</span></div>
+          <div class="info-row"><span class="info-label">Contact Phone</span><span class="info-value" id="iEcPhone">—</span></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- EDIT TAB -->
+    <div class="p-tab-content" id="tab-edit">
+      <div class="p-card">
+        <div class="p-card-header">
+          <h3>Edit Personal Information</h3>
+          <span style="font-size:12px;color:var(--muted)">Fields marked * are required</span>
+        </div>
+        <div class="p-card-body">
+          <form id="profileForm" onsubmit="saveProfile(event)">
+            <div class="edit-form-grid">
+              <div class="form-group">
+                <label>First Name *</label>
+                <input id="eFirstName" placeholder="First Name" required/>
+              </div>
+              <div class="form-group">
+                <label>Last Name *</label>
+                <input id="eLastName" placeholder="Last Name" required/>
+              </div>
+              <div class="form-group">
+                <label>Date of Birth</label>
+                <input id="eDob" type="date"/>
+              </div>
+              <div class="form-group">
+                <label>Gender</label>
+                <select id="eGender">
+                  <option value="">Select</option>
+                  <option>Male</option><option>Female</option>
+                </select>
+              </div>
+              <div class="form-group">
+                <label>Phone Number *</label>
+                <input id="ePhone" placeholder="+234 800 000 0000" required/>
+              </div>
+              <div class="form-group">
+                <label>Email Address</label>
+                <input id="eEmail" type="email" readonly/>
+              </div>
+              <div class="form-group full-width">
+                <label>Residential Address</label>
+                <input id="eAddress" placeholder="Full address"/>
+              </div>
+              <div class="form-group">
+                <label>Local Church</label>
+                <input id="eChurch" placeholder="Church Name"/>
+              </div>
+              <div class="form-group">
+                <label>Zone</label>
+                <input id="eZone" placeholder="Zone name"/>
+              </div>
+              <div class="form-group">
+                <label>Outpost</label>
+                <input id="eOutpost" placeholder="Outpost Name"/>
+              </div>
+              <div class="form-group">
+                <label>District</label>
+                <select id="eDistrict">
+                  <option value="">Select District</option>
+                  <option>Bayelsa North</option>
+                  <option>Bayelsa East</option>
+                  <option>Bayelsa Central</option>
+                </select>
+              </div>
+
+              <!-- Emergency Contact -->
+              <div class="form-group">
+                <label>Emergency Contact Name</label>
+                <input id="eEcName" placeholder="Full Name"/>
+              </div>
+              <div class="form-group">
+                <label>Emergency Contact Phone</label>
+                <input id="eEcPhone" placeholder="+234 800 000 0000"/>
+              </div>
+
+              <!-- Read-only fields -->
+              <div class="form-group">
+                <label>Membership ID</label>
+                <input id="eMemberID" readonly/>
+              </div>
+              <div class="form-group">
+                <label>Current Rank</label>
+                <input id="eRank" readonly title="Rank can only be updated by Admin"/>
+              </div>
+
+              <!-- Photo upload -->
+              <div class="form-group full-width">
+                <label>Profile Photo</label>
+                <div style="display:flex;align-items:center;gap:16px">
+                  <div id="photoPreviewWrap" style="width:70px;height:70px;border-radius:50%;background:var(--blue);display:flex;align-items:center;justify-content:center;color:#fff;font-size:1.4rem;font-weight:700;overflow:hidden;border:2px solid var(--gold)"></div>
+                  <div>
+                    <button type="button" class="btn btn-outline-dark" onclick="document.getElementById('photoInput').click()" style="font-size:13px">&#128247; Change Photo</button>
+                    <div style="font-size:11px;color:var(--muted);margin-top:4px">JPG, PNG — max 2MB. Click avatar above to change.</div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div id="profileSaveResult" class="form-result" style="margin:14px 0"></div>
+            <div style="display:flex;gap:10px;margin-top:4px">
+              <button type="submit" class="btn btn-blue" id="saveProfileBtn">&#10003; Save Changes</button>
+              <button type="button" class="btn btn-outline-dark" onclick="switchProfileTab('info')">Cancel</button>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+
+    <!-- SECURITY TAB -->
+    <div class="p-tab-content" id="tab-security">
+      <div class="p-card">
+        <div class="p-card-header"><h3>Change Password</h3></div>
+        <div class="p-card-body">
+          <form id="pwForm" onsubmit="changePassword(event)" style="max-width:400px">
+            <div class="form-group">
+              <label>Current Password *</label>
+              <div class="pw-wrap">
+                <input id="currentPw" type="password" placeholder="Current password" required/>
+                <button type="button" class="pw-toggle" onclick="togglePw('currentPw')">&#128065;</button>
+              </div>
+            </div>
+            <div class="form-group">
+              <label>New Password *</label>
+              <div class="pw-wrap">
+                <input id="newPw" type="password" placeholder="Min 8 characters" required oninput="checkPwStrength(this.value)"/>
+                <button type="button" class="pw-toggle" onclick="togglePw('newPw')">&#128065;</button>
+              </div>
+              <div id="pwStrengthBar" class="pw-strength" style="width:0%;background:var(--red)"></div>
+              <div id="pwStrengthHint" class="pw-hint"></div>
+            </div>
+            <div class="form-group">
+              <label>Confirm New Password *</label>
+              <div class="pw-wrap">
+                <input id="confirmPw" type="password" placeholder="Repeat new password" required/>
+                <button type="button" class="pw-toggle" onclick="togglePw('confirmPw')">&#128065;</button>
+              </div>
+            </div>
+            <div id="pwResult" class="form-result" style="margin:12px 0"></div>
+            <button type="submit" class="btn btn-red" id="changePwBtn">Update Password</button>
+          </form>
+        </div>
+      </div>
+
+      <div class="p-card">
+        <div class="p-card-header"><h3>&#128272; Account Security</h3></div>
+        <div class="p-card-body">
+          <div class="info-row"><span class="info-label">Email Verified</span><span class="info-value" id="emailVerified">—</span></div>
+          <div class="info-row"><span class="info-label">Last Login</span><span class="info-value" id="lastLogin">—</span></div>
+          <div class="info-row"><span class="info-label">Account Created</span><span class="info-value" id="acctCreated">—</span></div>
+          <div style="margin-top:16px">
+            <button class="btn btn-outline-dark" onclick="sendVerificationEmail()" id="verifyEmailBtn" style="font-size:13px">&#9993; Resend Verification Email</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- CERTIFICATIONS TAB -->
+    <div class="p-tab-content" id="tab-certs">
+      <div class="p-card">
+        <div class="p-card-header"><h3>&#127891; Certifications & Awards</h3></div>
+        <div class="p-card-body">
+          <div id="certsList">
+            <div class="loading-msg">Loading certifications...</div>
+          </div>
+        </div>
+      </div>
+      <div class="p-card">
+        <div class="p-card-header"><h3>&#127946; Training Records</h3></div>
+        <div class="p-card-body">
+          <div id="trainingRecordsList">
+            <div class="loading-msg">Loading training records...</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- APPOINTMENTS TAB -->
+    <div class="p-tab-content" id="tab-appointments">
+
+      <!-- Current Position -->
+      <div class="p-card">
+        <div class="p-card-header"><h3>&#127381; Current Position</h3></div>
+        <div class="p-card-body">
+          <div id="currentPositionBlock">
+            <div class="loading-msg">Loading...</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Appointment History -->
+      <div class="p-card">
+        <div class="p-card-header">
+          <h3>&#128203; Appointment History</h3>
+          <span id="apptCount" style="font-size:12px;color:var(--muted)"></span>
+        </div>
+        <div class="p-card-body" id="appointmentsList">
+          <div class="loading-msg">Loading appointments...</div>
+        </div>
+      </div>
+
+      <!-- Positions Held Summary -->
+      <div class="p-card">
+        <div class="p-card-header"><h3>&#127942; Positions Held Summary</h3></div>
+        <div class="p-card-body" id="positionsSummary">
+          <div class="loading-msg">Loading...</div>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- ATTENDANCE TAB -->
+    <div class="p-tab-content" id="tab-attendance">
+      <div class="p-card">
+        <div class="p-card-header">
+          <h3>&#9989; Attendance History</h3>
+          <span id="attTotal" style="font-size:12px;color:var(--muted)"></span>
+        </div>
+        <div class="p-card-body" id="attendanceList">
+          <div class="loading-msg">Loading attendance...</div>
+        </div>
+      </div>
+
+      <div class="p-card">
+        <div class="p-card-header"><h3>&#128197; Event Registrations</h3></div>
+        <div class="p-card-body" id="eventRegList">
+          <div class="loading-msg">Loading registrations...</div>
+        </div>
+      </div>
+    </div>
+
+  </div><!-- /profile-main -->
+</div><!-- /profile-body -->
+
+<!-- Toast -->
+<div class="toast" id="toast"></div>
+
+<footer class="mini-footer">&copy; <span id="yr"></span> Royal Rangers Bayelsa State Command</footer>
+
+<!-- Firebase -->
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-storage-compat.js"></script>
+<script src="assets/js/firebase-config.js"></script>
+<script src="assets/js/auth.js"></script>
+<script>
+document.getElementById("yr").textContent = new Date().getFullYear();
+
+const RANKS = ["Recruit","Ranger","Ranger 1st Class","Gold Ranger","Staff Commander","Commander"];
+let currentUser = null, uploadingPhoto = false;
+
+// ── Init ──────────────────────────────────────────────────────────
+initFirebase();
+document.addEventListener("DOMContentLoaded", async () => {
+  await loadAppConfig();
+  currentUser = await requireAuth("login.html");
+  if (!currentUser) return;
+  populateAll(currentUser);
+  loadCertifications(currentUser);
+  loadAttendance(currentUser.uid);
+  loadEventRegistrations(currentUser.uid);
+  loadAppointments(currentUser.uid);
+  loadSecurityInfo();
+  loadNotifBadge(currentUser.uid);
+});
+
+// ── Populate all UI ───────────────────────────────────────────────
+function populateAll(u) {
+  const name = u.fullName || `${u.firstName||""} ${u.lastName||""}`.trim();
+  const initials = ((u.firstName||"?")[0]+(u.lastName||"?")[0]).toUpperCase();
+  const yr = new Date().getFullYear();
+
+  // Hero
+  document.getElementById("heroName").textContent = name;
+  document.getElementById("heroMeta").textContent =
+    `${u.rank||"Recruit"} • ${u.membershipID||"—"} • ${u.district||"—"}`;
+  const statusMap = { active:"pill-active", pending:"pill-pending", inactive:"pill-inactive" };
+  const statusLabel = { active:"✓ Active", pending:"⏳ Pending Approval", inactive:"✗ Inactive" };
+  document.getElementById("heroStatus").innerHTML =
+    `<span class="member-status-pill ${statusMap[u.status]||'pill-pending'}">${statusLabel[u.status]||u.status}</span>`;
+
+  // Avatar
+  const avatarEl = document.getElementById("profileAvatarEl");
+  document.getElementById("profileInitials").textContent = initials;
+  if (u.photoURL) {
+    avatarEl.innerHTML = `<img src="${u.photoURL}" alt="${name}"/><div class="avatar-edit-overlay">📷</div>`;
+  }
+
+  // Photo preview in edit form
+  const ppw = document.getElementById("photoPreviewWrap");
+  if (u.photoURL) ppw.innerHTML = `<img src="${u.photoURL}" style="width:100%;height:100%;object-fit:cover;border-radius:50%"/>`;
+  else ppw.textContent = initials;
+
+  // Mini card
+  document.getElementById("mcID").textContent = u.membershipID||"—";
+  document.getElementById("mcName").textContent = name;
+  document.getElementById("mcRank").textContent = "⭐ " + (u.rank||"Recruit");
+  document.getElementById("mcDistrict").textContent = u.district||"—";
+  document.getElementById("mcOutpost").textContent = u.outpost||"—";
+  document.getElementById("mcValid").textContent = `${yr}–${yr+1}`;
+
+  // Rank progress
+  const rankIdx = RANKS.indexOf(u.rank||"Recruit");
+  const nextRank = RANKS[rankIdx+1] || "Top Rank";
+  const pct = Math.min(100, Math.round(((rankIdx+1)/RANKS.length)*100));
+  document.getElementById("rankDisplay").textContent = u.rank||"Recruit";
+  document.getElementById("rankNext").textContent = nextRank;
+  document.getElementById("rankFill").style.width = pct + "%";
+  document.getElementById("rankHint").textContent =
+    rankIdx < RANKS.length-1
+      ? `Complete requirements to advance to ${nextRank}`
+      : "You have reached the highest rank!";
+
+  // Quick stats
+  document.getElementById("statCerts").textContent = (u.certifications||[]).length;
+  document.getElementById("statTraining").textContent = (u.trainingRecords||[]).length;
+  document.getElementById("statSince").textContent = u.createdAt?.toDate
+    ? u.createdAt.toDate().toLocaleDateString("en-GB",{day:"numeric",month:"short",year:"numeric"})
+    : "—";
+  document.getElementById("statLast").textContent = u.lastLogin?.toDate
+    ? u.lastLogin.toDate().toLocaleDateString("en-GB",{day:"numeric",month:"short",year:"numeric"})
+    : "—";
+
+  // Info tab
+  document.getElementById("iFullName").textContent = name;
+  document.getElementById("iDob").textContent = u.dob
+    ? new Date(u.dob).toLocaleDateString("en-GB",{day:"numeric",month:"long",year:"numeric"})
+    : "—";
+  document.getElementById("iGender").textContent = u.gender||"—";
+  document.getElementById("iPhone").textContent = u.phone||"—";
+  document.getElementById("iEmail").textContent = u.email||"—";
+  document.getElementById("iAddress").textContent = u.address||"—";
+  document.getElementById("iMemberID").textContent = u.membershipID||"—";
+  document.getElementById("iRank").textContent = u.rank||"Recruit";
+  document.getElementById("iDistrict").textContent = u.district||"—";
+  document.getElementById("iZone").textContent = u.zone||"—";
+  document.getElementById("iOutpost").textContent = u.outpost||"—";
+  document.getElementById("iChurch").textContent = u.church||"—";
+  document.getElementById("iEcName").textContent = u.ecName||"—";
+  document.getElementById("iEcPhone").textContent = u.ecPhone||"—";
+  document.getElementById("iStatus").className = `member-status-pill ${statusMap[u.status]||'pill-pending'}`;
+  document.getElementById("iStatus").textContent = statusLabel[u.status]||u.status;
+
+  // Edit form pre-fill
+  document.getElementById("eFirstName").value = u.firstName||"";
+  document.getElementById("eLastName").value = u.lastName||"";
+  document.getElementById("eDob").value = u.dob||"";
+  document.getElementById("eGender").value = u.gender||"";
+  document.getElementById("ePhone").value = u.phone||"";
+  document.getElementById("eEmail").value = u.email||"";
+  document.getElementById("eAddress").value = u.address||"";
+  document.getElementById("eChurch").value = u.church||"";
+  document.getElementById("eZone").value = u.zone||"";
+  document.getElementById("eOutpost").value = u.outpost||"";
+  document.getElementById("eDistrict").value = u.district||"";
+  document.getElementById("eMemberID").value = u.membershipID||"";
+  document.getElementById("eRank").value = u.rank||"Recruit";
+  document.getElementById("eEcName").value = u.ecName||"";
+  document.getElementById("eEcPhone").value = u.ecPhone||"";
+}
+
+// ── Save Profile ──────────────────────────────────────────────────
+async function saveProfile(e) {
+  e.preventDefault();
+  const btn = document.getElementById("saveProfileBtn");
+  const res = document.getElementById("profileSaveResult");
+  btn.disabled = true; btn.textContent = "Saving…";
+
+  const updates = {
+    firstName: document.getElementById("eFirstName").value.trim(),
+    lastName:  document.getElementById("eLastName").value.trim(),
+    dob:       document.getElementById("eDob").value,
+    gender:    document.getElementById("eGender").value,
+    phone:     document.getElementById("ePhone").value.trim(),
+    address:   document.getElementById("eAddress").value.trim(),
+    church:    document.getElementById("eChurch").value.trim(),
+    zone:      document.getElementById("eZone").value.trim(),
+    outpost:   document.getElementById("eOutpost").value.trim(),
+    district:  document.getElementById("eDistrict").value,
+    ecName:    document.getElementById("eEcName").value.trim(),
+    ecPhone:   document.getElementById("eEcPhone").value.trim()
+  };
+
+  try {
+    await updateMemberProfile(currentUser.uid, updates, null);
+    // Refresh local data
+    currentUser = { ...currentUser, ...updates,
+      fullName: `${updates.firstName} ${updates.lastName}` };
+    populateAll(currentUser);
+    showToast("Profile updated successfully!", "success");
+    res.innerHTML = '<span class="success-msg">&#10003; Changes saved!</span>';
+    setTimeout(() => switchProfileTab("info"), 1000);
+  } catch (err) {
+    res.innerHTML = `<span class="error-msg">&#10006; ${err.message}</span>`;
+  }
+  btn.disabled = false; btn.textContent = "✓ Save Changes";
+}
+
+// ── Photo Upload ──────────────────────────────────────────────────
+async function handlePhotoUpload(input) {
+  if (!input.files[0] || uploadingPhoto) return;
+  const file = input.files[0];
+  if (file.size > 2 * 1024 * 1024) { showToast("Photo must be under 2MB.", "error"); return; }
+  uploadingPhoto = true;
+  showToast("Uploading photo…");
+  try {
+    const ref = storage.ref(`profile_photos/${currentUser.uid}/${Date.now()}_${file.name}`);
+    await ref.put(file);
+    const url = await ref.getDownloadURL();
+    await db.collection("members").doc(currentUser.uid).update({ photoURL: url });
+    currentUser.photoURL = url;
+
+    // Update avatar in hero
+    const initials = ((currentUser.firstName||"?")[0]+(currentUser.lastName||"?")[0]).toUpperCase();
+    document.getElementById("profileAvatarEl").innerHTML =
+      `<img src="${url}" alt="Photo"/><div class="avatar-edit-overlay">📷</div>`;
+
+    // Update preview in edit form
+    const ppw = document.getElementById("photoPreviewWrap");
+    ppw.innerHTML = `<img src="${url}" style="width:100%;height:100%;object-fit:cover;border-radius:50%"/>`;
+
+    showToast("Photo updated!", "success");
+  } catch (err) {
+    showToast("Upload failed: " + err.message, "error");
+  }
+  uploadingPhoto = false;
+}
+
+// ── Change Password ───────────────────────────────────────────────
+async function changePassword(e) {
+  e.preventDefault();
+  const btn = document.getElementById("changePwBtn");
+  const res = document.getElementById("pwResult");
+  const currentPw = document.getElementById("currentPw").value;
+  const newPw     = document.getElementById("newPw").value;
+  const confirmPw = document.getElementById("confirmPw").value;
+
+  if (newPw !== confirmPw) {
+    res.innerHTML = '<span class="error-msg">New passwords do not match.</span>'; return;
+  }
+  if (newPw.length < 8) {
+    res.innerHTML = '<span class="error-msg">Password must be at least 8 characters.</span>'; return;
+  }
+  btn.disabled = true; btn.textContent = "Updating…";
+  try {
+    // Re-authenticate first
+    const cred = firebase.auth.EmailAuthProvider.credential(auth.currentUser.email, currentPw);
+    await auth.currentUser.reauthenticateWithCredential(cred);
+    await auth.currentUser.updatePassword(newPw);
+    res.innerHTML = '<span class="success-msg">&#10003; Password updated successfully!</span>';
+    document.getElementById("pwForm").reset();
+    showToast("Password changed!", "success");
+  } catch (err) {
+    const msg = err.code === "auth/wrong-password"
+      ? "Current password is incorrect."
+      : err.code === "auth/too-many-requests"
+      ? "Too many attempts. Try again later."
+      : err.message;
+    res.innerHTML = `<span class="error-msg">&#10006; ${msg}</span>`;
+  }
+  btn.disabled = false; btn.textContent = "Update Password";
+}
+
+// ── Password strength ─────────────────────────────────────────────
+function checkPwStrength(pw) {
+  let score = 0;
+  if (pw.length >= 8) score++;
+  if (/[A-Z]/.test(pw)) score++;
+  if (/[0-9]/.test(pw)) score++;
+  if (/[^A-Za-z0-9]/.test(pw)) score++;
+  const colors = ["","#E74C3C","#E67E22","#F1C40F","#27AE60"];
+  const labels = ["","Weak","Fair","Good","Strong"];
+  const bar = document.getElementById("pwStrengthBar");
+  bar.style.width = (score*25) + "%";
+  bar.style.background = colors[score]||"transparent";
+  document.getElementById("pwStrengthHint").textContent = labels[score]||"";
+}
+
+// ── Security info ─────────────────────────────────────────────────
+function loadSecurityInfo() {
+  const u = auth.currentUser;
+  if (!u) return;
+  document.getElementById("emailVerified").innerHTML = u.emailVerified
+    ? '<span class="cert-badge">&#10003; Verified</span>'
+    : '<span style="color:var(--red)">&#10006; Not verified</span>';
+  document.getElementById("lastLogin").textContent =
+    u.metadata.lastSignInTime
+      ? new Date(u.metadata.lastSignInTime).toLocaleDateString("en-GB",{day:"numeric",month:"short",year:"numeric",hour:"2-digit",minute:"2-digit"})
+      : "—";
+  document.getElementById("acctCreated").textContent =
+    u.metadata.creationTime
+      ? new Date(u.metadata.creationTime).toLocaleDateString("en-GB",{day:"numeric",month:"short",year:"numeric"})
+      : "—";
+}
+
+async function sendVerificationEmail() {
+  const btn = document.getElementById("verifyEmailBtn");
+  btn.disabled = true; btn.textContent = "Sending…";
+  try {
+    await auth.currentUser.sendEmailVerification();
+    showToast("Verification email sent!", "success");
+    btn.textContent = "✓ Sent";
+  } catch(e) {
+    showToast(e.message, "error");
+    btn.disabled = false; btn.textContent = "Resend Verification Email";
+  }
+}
+
+// ── Certifications ────────────────────────────────────────────────
+function loadCertifications(u) {
+  const certs = u.certifications || [];
+  const el = document.getElementById("certsList");
+  if (!certs.length) {
+    el.innerHTML = "<p style='color:var(--muted);font-size:13px'>No certifications recorded yet. Complete training programs to earn certifications.</p>";
+  } else {
+    el.innerHTML = certs.map(c =>
+      `<span class="cert-badge">&#127891; ${typeof c === "string" ? c : c.name}</span>`
+    ).join("");
+  }
+
+  const records = u.trainingRecords || [];
+  const tEl = document.getElementById("trainingRecordsList");
+  if (!records.length) {
+    tEl.innerHTML = "<p style='color:var(--muted);font-size:13px'>No training records yet.</p>";
+  } else {
+    tEl.innerHTML = records.map(r => `
+      <div class="att-row">
+        <div><div class="att-event">${r.name||r}</div>${r.date?`<div class="att-date">&#128197; ${r.date}</div>`:""}</div>
+        <span class="att-badge" style="background:#EBF5FB;color:var(--blue)">${r.status||"Completed"}</span>
+      </div>`).join("");
+  }
+  document.getElementById("statEvents").textContent = records.length;
+}
+
+// ── Appointments & Positions ──────────────────────────────────────
+async function loadAppointments(uid) {
+  // Current position block
+  const posEl = document.getElementById("currentPositionBlock");
+  const listEl = document.getElementById("appointmentsList");
+  const summEl = document.getElementById("positionsSummary");
+
+  try {
+    // Fetch from member doc (position field) + appointments subcollection
+    const memberSnap = await db.collection("members").doc(uid).get();
+    const m = memberSnap.data() || {};
+
+    // ── Current Position ──
+    if (m.currentPosition || m.position || m.appointmentTitle) {
+      const pos = m.currentPosition || m.position || m.appointmentTitle;
+      const unit = m.appointmentUnit || m.district || "";
+      const since = m.appointmentDate
+        ? new Date(m.appointmentDate).toLocaleDateString("en-GB",{day:"numeric",month:"long",year:"numeric"})
+        : "—";
+      posEl.innerHTML = `
+        <div class="position-current-card">
+          <div class="pc-badge">&#127381;</div>
+          <div class="pc-info">
+            <div class="pc-title">${pos}</div>
+            <div class="pc-unit">${unit}</div>
+            <div class="pc-since">&#128197; Appointed: ${since}</div>
+          </div>
+          <span class="att-badge" style="background:#E9F7EF;color:#1E8449;align-self:flex-start">&#10003; Active</span>
+        </div>`;
+    } else {
+      posEl.innerHTML = `<p style="color:var(--muted);font-size:13px">No current position recorded. Contact your District Administrator to update your appointment.</p>`;
+    }
+
+    // ── Appointment History (subcollection) ──
+    const apptSnap = await db.collection("members").doc(uid)
+      .collection("appointments").orderBy("startDate","desc").get();
+
+    document.getElementById("apptCount").textContent =
+      apptSnap.size ? `${apptSnap.size} record${apptSnap.size!==1?"s":""}` : "";
+
+    if (apptSnap.empty && !(m.currentPosition || m.position)) {
+      listEl.innerHTML = `<p style="color:var(--muted);font-size:13px">No appointment records found yet.</p>`;
+    } else {
+      const rows = [];
+      // Include current position as first row if exists
+      if (m.currentPosition || m.position || m.appointmentTitle) {
+        const pos = m.currentPosition || m.position || m.appointmentTitle;
+        const since = m.appointmentDate
+          ? new Date(m.appointmentDate).toLocaleDateString("en-GB",{day:"numeric",month:"short",year:"numeric"})
+          : "—";
+        rows.push({ title: pos, unit: m.appointmentUnit||m.district||"", start: since, end: "Present", status: "active", appointedBy: m.appointedBy||"" });
+      }
+      apptSnap.forEach(doc => {
+        const d = doc.data();
+        rows.push({
+          title: d.title||d.position||"—",
+          unit: d.unit||d.district||"",
+          start: d.startDate?.toDate?.().toLocaleDateString("en-GB",{day:"numeric",month:"short",year:"numeric"}) || d.startDate || "—",
+          end: d.endDate
+            ? (d.endDate?.toDate?.().toLocaleDateString("en-GB",{day:"numeric",month:"short",year:"numeric"}) || d.endDate)
+            : "Present",
+          status: d.status || (d.endDate ? "past" : "active"),
+          appointedBy: d.appointedBy||""
+        });
+      });
+
+      listEl.innerHTML = rows.map(r => `
+        <div class="appt-row">
+          <div class="appt-icon-wrap">
+            <div class="appt-icon ${r.status==="active"?"appt-active":"appt-past"}">
+              ${r.status==="active"?"&#127381;":"&#128203;"}
+            </div>
+            ${r.status!=="active"?'<div class="appt-line"></div>':""}
+          </div>
+          <div class="appt-content">
+            <div class="appt-title">${r.title}</div>
+            <div class="appt-unit">${r.unit}</div>
+            <div class="appt-dates">&#128197; ${r.start} &rarr; ${r.end}</div>
+            ${r.appointedBy?`<div class="appt-by">&#128100; Appointed by: ${r.appointedBy}</div>`:""}
+          </div>
+          <span class="att-badge ${r.status==="active"?"":"" }"
+            style="${r.status==="active"?"background:#E9F7EF;color:#1E8449":"background:#f5f5f5;color:var(--muted)"}">
+            ${r.status==="active"?"&#10003; Current":"Completed"}
+          </span>
+        </div>`).join("");
+    }
+
+    // ── Positions Held Summary ──
+    const allTitles = [];
+    if (m.currentPosition || m.position || m.appointmentTitle) {
+      allTitles.push(m.currentPosition || m.position || m.appointmentTitle);
+    }
+    apptSnap.forEach(doc => {
+      const d = doc.data();
+      if (d.title || d.position) allTitles.push(d.title || d.position);
+    });
+
+    if (!allTitles.length) {
+      summEl.innerHTML = `<p style="color:var(--muted);font-size:13px">No positions recorded.</p>`;
+    } else {
+      // Deduplicate
+      const unique = [...new Set(allTitles)];
+      summEl.innerHTML = `
+        <div style="margin-bottom:16px;font-size:13px;color:var(--muted)">${unique.length} unique position${unique.length!==1?"s":""} held across your Rangers career</div>
+        <div style="display:flex;flex-wrap:wrap;gap:8px">
+          ${unique.map(p => `<span class="position-chip">&#127381; ${p}</span>`).join("")}
+        </div>
+        <div style="margin-top:20px">
+          <div class="info-row"><span class="info-label">Total Appointments</span><span class="info-value">${apptSnap.size + (m.currentPosition||m.position?1:0)}</span></div>
+          <div class="info-row"><span class="info-label">Current Position</span><span class="info-value">${m.currentPosition||m.position||m.appointmentTitle||"None"}</span></div>
+          <div class="info-row"><span class="info-label">District</span><span class="info-value">${m.district||"—"}</span></div>
+          <div class="info-row"><span class="info-label">Rank</span><span class="info-value">${m.rank||"—"}</span></div>
+        </div>`;
+    }
+
+  } catch(err) {
+    posEl.innerHTML = `<p class="error-msg">Failed to load: ${err.message}</p>`;
+    listEl.innerHTML = "";
+    summEl.innerHTML = "";
+  }
+}
+
+// ── Attendance ────────────────────────────────────────────────────
+async function loadAttendance(uid) {
+  const el = document.getElementById("attendanceList");
+  try {
+    const snap = await db.collection("attendance")
+      .where("memberId","==", uid)
+      .orderBy("date","desc").limit(20).get();
+    if (snap.empty) {
+      el.innerHTML = "<p style='color:var(--muted);font-size:13px'>No attendance records found.</p>";
+      document.getElementById("attTotal").textContent = "0 records";
+      return;
+    }
+    document.getElementById("attTotal").textContent = `${snap.size} record${snap.size!==1?"s":""}`;
+    el.innerHTML = "";
+    snap.forEach(doc => {
+      const d = doc.data();
+      const dt = d.date?.toDate?.().toLocaleDateString("en-GB",{day:"numeric",month:"short",year:"numeric"})||"—";
+      el.innerHTML += `
+        <div class="att-row">
+          <div><div class="att-event">${d.eventName||"Event"}</div><div class="att-date">&#128197; ${dt}</div></div>
+          <span class="att-badge status-${d.status==="present"?"active":"inactive"}">${d.status==="present"?"&#10003; Present":"Absent"}</span>
+        </div>`;
+    });
+  } catch(e) {
+    el.innerHTML = "<p style='color:var(--muted);font-size:13px'>Attendance records not available.</p>";
+  }
+}
+
+// ── Event Registrations ───────────────────────────────────────────
+async function loadEventRegistrations(uid) {
+  const el = document.getElementById("eventRegList");
+  try {
+    // Query all events and check subcollection registrations for this user
+    const evSnap = await db.collection("events").orderBy("date","desc").limit(30).get();
+    const regs = [];
+    for (const evDoc of evSnap.docs) {
+      const regDoc = await db.collection("events").doc(evDoc.id)
+        .collection("registrations").doc(uid).get();
+      if (regDoc.exists) {
+        regs.push({ event: evDoc.data(), reg: regDoc.data() });
+      }
+    }
+    if (!regs.length) {
+      el.innerHTML = "<p style='color:var(--muted);font-size:13px'>You have not registered for any events yet. <a href='activities.html' style='color:var(--blue)'>Browse Events</a></p>";
+      return;
+    }
+    el.innerHTML = regs.map(({ event: ev, reg }) => {
+      const dt = ev.date?.toDate?.().toLocaleDateString("en-GB",{day:"numeric",month:"short",year:"numeric"})||"TBA";
+      return `
+        <div class="att-row">
+          <div>
+            <div class="att-event">${ev.title||"Event"}</div>
+            <div class="att-date">&#128197; ${dt} &nbsp;&#183;&nbsp; &#128205; ${ev.location||"TBA"}</div>
+          </div>
+          <span class="att-badge" style="background:#E9F7EF;color:#1E8449">&#10003; Registered</span>
+        </div>`;
+    }).join("");
+  } catch(e) {
+    el.innerHTML = "<p style='color:var(--muted);font-size:13px'>Event registrations not available.</p>";
+  }
+}
+
+// ── Notification badge ────────────────────────────────────────────
+async function loadNotifBadge(uid) {
+  try {
+    const snap = await db.collection("notifications")
+      .where("userId","in",[uid,"admins"])
+      .where("read","==",false).get();
+    if (snap.size > 0) {
+      const badge = document.getElementById("notifCount");
+      badge.textContent = snap.size;
+      badge.style.display = "inline-block";
+    }
+  } catch(e) {}
+}
+
+// ── Tab switching ─────────────────────────────────────────────────
+function switchProfileTab(name, btn) {
+  document.querySelectorAll(".p-tab-content").forEach(el => el.classList.remove("active"));
+  document.querySelectorAll(".p-tab").forEach(el => el.classList.remove("active"));
+  document.getElementById("tab-"+name).classList.add("active");
+  if (btn) btn.classList.add("active");
+  else {
+    // find the button by index
+    const map = {info:0,edit:1,security:2,certs:3,attendance:4,appointments:5};
+    const tabs = document.querySelectorAll(".p-tab");
+    if (tabs[map[name]]) tabs[map[name]].classList.add("active");
+  }
+}
+
+// ── Toast ─────────────────────────────────────────────────────────
+function showToast(msg, type="") {
+  const t = document.getElementById("toast");
+  t.textContent = msg;
+  t.className = "toast show" + (type?" "+type:"");
+  setTimeout(() => t.className = "toast", 3000);
+}
+
+// ── Helpers ───────────────────────────────────────────────────────
+function togglePw(id) {
+  const el = document.getElementById(id);
+  el.type = el.type === "password" ? "text" : "password";
+}
+</script>
+</body>
+</html>

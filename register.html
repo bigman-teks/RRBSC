@@ -53,7 +53,9 @@
         <div class="form-group"><label>Outpost</label><input id="outpost" placeholder="Outpost Name"/></div>
         <div class="form-group"><label>Current Rank</label>
           <select id="rank">
-            <option>Recruit</option><option>Ranger</option><option>Ranger 1st Class</option>
+            <option>Recruit</option>
+            <option>Ranger</option>
+            <option>Ranger 1st Class</option>
             <option>Gold Ranger</option><option>Staff Commander</option><option>Commander</option>
           </select>
         </div>
@@ -105,7 +107,18 @@
 <script src="assets/js/auth.js"></script>
 <script>
 initFirebase(); loadAppConfig();
-auth.onAuthStateChanged(u => { if (u) window.location.href = "dashboard.html"; });
+auth.onAuthStateChanged(async user => {
+  if (!user) return;
+
+  const justRegistered = sessionStorage.getItem("justRegistered");
+
+  if (justRegistered === "true") {
+    sessionStorage.removeItem("justRegistered");
+    return;
+  }
+
+  window.location.href = "dashboard.html";
+});
 
 function previewPhoto(input) {
   if (input.files[0]) {
@@ -153,16 +166,28 @@ document.getElementById("regForm").addEventListener("submit", async e => {
       ecName: document.getElementById("ecName").value.trim(),
       ecPhone: document.getElementById("ecPhone").value.trim()
     };
-    const photo = document.getElementById("photoFile").files[0] || null;
-    const { membershipID } = await registerMember(formData, photo);
+const photo = document.getElementById("photoFile").files[0] || null;
+sessionStorage.setItem("justRegistered", "true");
+const { membershipID } = await registerMember(formData, photo);
     sucEl.innerHTML = `&#10003; Registration successful! Your Membership ID is <strong>${membershipID}</strong>.<br/>Please check your email for a verification link. Await admin approval.`;
     sucEl.style.display = "block";
     e.target.reset();
     setTimeout(() => window.location.href = "login.html", 5000);
   } catch (err) {
-    errEl.textContent = err.message;
+
+    console.error(err);
+
+    errEl.innerHTML =
+      "Code: " + (err.code || "none") +
+      "<br>Message: " + err.message;
+
     errEl.style.display = "block";
-    btn.disabled = false; btn.textContent = "Complete Registration";
+
+  } finally {
+
+    btn.disabled = false;
+    btn.textContent = "Complete Registration";
+
   }
 });
 </script>
