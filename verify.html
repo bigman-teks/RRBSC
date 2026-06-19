@@ -1,0 +1,145 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/><meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>Member Verification — Royal Rangers Bayelsa</title>
+<link rel="stylesheet" href="css.css"/>
+<style>
+.verify-wrap{min-height:100vh;background:linear-gradient(135deg,var(--dark),var(--blue));display:flex;align-items:center;justify-content:center;padding:24px}
+.verify-card{background:#fff;border-radius:20px;max-width:420px;width:100%;overflow:hidden;box-shadow:0 20px 60px rgba(0,0,0,.3)}
+.verify-header{background:linear-gradient(135deg,var(--blue),#0D2C4A);padding:28px 24px;text-align:center;color:#fff}
+.verify-logo{font-size:11px;letter-spacing:1px;color:var(--gold);font-weight:700;margin-bottom:4px}
+.verify-status-icon{font-size:3.2rem;margin:8px 0}
+.verify-status-text{font-size:1.1rem;font-weight:700}
+.verify-body{padding:28px 24px}
+.v-avatar-wrap{display:flex;justify-content:center;margin:-50px auto 16px;position:relative;z-index:2}
+.v-avatar{width:96px;height:96px;border-radius:50%;border:4px solid #fff;background:var(--blue);display:flex;align-items:center;justify-content:center;color:#fff;font-size:2rem;font-weight:700;box-shadow:0 4px 14px rgba(0,0,0,.2);overflow:hidden}
+.v-avatar img{width:100%;height:100%;object-fit:cover;border-radius:50%}
+.v-name{text-align:center;font-size:1.25rem;font-weight:700;color:var(--blue)}
+.v-rank{text-align:center;font-size:13px;color:var(--gold);font-weight:600;margin:2px 0 16px}
+.v-detail-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:16px}
+.v-detail{background:var(--light);border-radius:10px;padding:12px}
+.v-detail .lbl{font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;margin-bottom:3px}
+.v-detail .val{font-size:13px;font-weight:700;color:var(--text)}
+.v-id-strip{background:var(--dark);color:#fff;text-align:center;padding:10px;border-radius:10px;font-family:monospace;font-size:13px;letter-spacing:1px;margin-bottom:16px}
+.v-footer-note{text-align:center;font-size:11.5px;color:var(--muted);margin-top:8px;line-height:1.6}
+.v-loading{text-align:center;padding:60px 24px;color:var(--muted)}
+.v-spinner{width:36px;height:36px;border:3px solid var(--border);border-top-color:var(--blue);border-radius:50%;animation:spin 0.8s linear infinite;margin:0 auto 16px}
+@keyframes spin{to{transform:rotate(360deg)}}
+.verify-error .verify-header{background:linear-gradient(135deg,#922B21,var(--red))}
+</style>
+</head>
+<body>
+
+<div class="verify-wrap">
+  <div class="verify-card" id="verifyCard">
+    <div class="v-loading" id="loadingState">
+      <div class="v-spinner"></div>
+      <p>Verifying membership...</p>
+    </div>
+  </div>
+</div>
+
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
+<script src="assets/js/firebase-config.js"></script>
+<script>
+// Verify page only needs Firestore — no auth required (public page)
+app = firebase.initializeApp(firebaseConfig);
+db = firebase.firestore();
+
+document.addEventListener("DOMContentLoaded", async () => {
+  await loadAppConfig().catch(()=>{});
+
+  const params = new URLSearchParams(window.location.search);
+  const membershipID = params.get("id");
+
+  if (!membershipID) {
+    renderError("No membership ID provided in the scan link.");
+    return;
+  }
+
+  try {
+    const snap = await db.collection("members")
+      .where("membershipID","==", membershipID)
+      .limit(1).get();
+
+    if (snap.empty) {
+      renderError(`No member found with ID "${membershipID}".`);
+      return;
+    }
+
+    const m = snap.docs[0].data();
+    renderMember(m);
+
+  } catch (err) {
+    renderError("Verification failed: " + err.message);
+  }
+});
+
+function renderMember(m) {
+  const name = m.fullName || `${m.firstName||""} ${m.lastName||""}`.trim();
+  const initials = ((m.firstName||"?")[0] + (m.lastName||"?")[0]).toUpperCase();
+  const isActive = m.status === "active";
+
+  const statusConfig = {
+    active:   { icon:"&#9989;",  text:"Verified Member",      class:"" },
+    pending:  { icon:"&#9203;",  text:"Pending Approval",     class:"verify-pending" },
+    inactive: { icon:"&#10060;", text:"Membership Inactive",  class:"verify-error" }
+  }[m.status] || { icon:"&#10067;", text:"Unknown Status", class:"verify-error" };
+
+  const yr = new Date().getFullYear();
+  const since = m.createdAt?.toDate
+    ? m.createdAt.toDate().toLocaleDateString("en-GB",{month:"short",year:"numeric"})
+    : "—";
+
+  document.getElementById("verifyCard").className = "verify-card " + statusConfig.class;
+  document.getElementById("verifyCard").innerHTML = `
+    <div class="verify-header">
+      <div class="verify-logo app-name">ROYAL RANGERS &mdash; <span class="app-state">BAYELSA STATE COMMAND</span></div>
+      <div class="verify-status-icon">${statusConfig.icon}</div>
+      <div class="verify-status-text">${statusConfig.text}</div>
+    </div>
+    <div class="verify-body">
+      <div class="v-avatar-wrap">
+        <div class="v-avatar">
+          ${m.photoURL ? `<img src="${m.photoURL}" alt="${name}"/>` : initials}
+        </div>
+      </div>
+      <div class="v-name">${name}</div>
+      <div class="v-rank">&#11088; ${m.rank || "Recruit"}</div>
+
+      <div class="v-id-strip">${m.membershipID || "—"}</div>
+
+      <div class="v-detail-grid">
+        <div class="v-detail"><div class="lbl">District</div><div class="val">${m.district||"—"}</div></div>
+        <div class="v-detail"><div class="lbl">Outpost</div><div class="val">${m.outpost||"—"}</div></div>
+        <div class="v-detail"><div class="lbl">Member Since</div><div class="val">${since}</div></div>
+        <div class="v-detail"><div class="lbl">Valid Through</div><div class="val">${yr+1}</div></div>
+      </div>
+
+      <div class="v-footer-note">
+        This card was verified against the official Royal Rangers<br/>Bayelsa State Command membership database.<br/>
+        Verified on ${new Date().toLocaleDateString("en-GB",{day:"numeric",month:"long",year:"numeric",hour:"2-digit",minute:"2-digit"})}
+      </div>
+    </div>
+  `;
+}
+
+function renderError(msg) {
+  document.getElementById("verifyCard").className = "verify-card verify-error";
+  document.getElementById("verifyCard").innerHTML = `
+    <div class="verify-header">
+      <div class="verify-logo">ROYAL RANGERS &mdash; BAYELSA STATE COMMAND</div>
+      <div class="verify-status-icon">&#10060;</div>
+      <div class="verify-status-text">Verification Failed</div>
+    </div>
+    <div class="verify-body" style="text-align:center">
+      <p style="color:var(--muted);font-size:14px;margin:10px 0 20px">${msg}</p>
+      <a href="index.html" class="btn btn-blue" style="display:inline-block">Return to Homepage</a>
+    </div>
+  `;
+}
+</script>
+</body>
+</html>

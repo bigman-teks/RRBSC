@@ -399,6 +399,30 @@
   </div>
 </div>
 
+<!-- Edit Membership ID Modal -->
+<div id="editIDModal" class="modal" style="display:none">
+  <div class="modal-box" style="max-width:420px">
+    <h3>&#127380; Edit Membership ID</h3>
+    <p style="font-size:12px;color:var(--muted);margin-bottom:16px">
+      Changing this ID updates the member's official serial number across the platform, including their membership card and QR code. Make sure the new ID is unique.
+    </p>
+    <input type="hidden" id="editIDDocId"/>
+    <div class="form-group">
+      <label>Current Membership ID</label>
+      <input id="editIDCurrent" readonly style="background:var(--light);color:var(--muted)"/>
+    </div>
+    <div class="form-group">
+      <label>New Membership ID *</label>
+      <input id="editIDNew" placeholder="e.g. RR-BY-0123" required/>
+    </div>
+    <div id="editIDResult" class="form-result" style="margin:10px 0"></div>
+    <div style="display:flex;gap:10px">
+      <button class="btn btn-red" onclick="saveMembershipID()">&#10003; Save New ID</button>
+      <button class="btn btn-outline-dark" onclick="closeModal('editIDModal')">Cancel</button>
+    </div>
+  </div>
+</div>
+
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
@@ -510,6 +534,7 @@ function renderMembersTable(members) {
       <td>${m.phone||"—"}</td>
       <td><span class="status-badge status-${m.status||'pending'}">${m.status||"pending"}</span></td>
       <td>
+        <button class="btn-icon" onclick="editMembershipID('${m.id}','${m.membershipID||''}')" title="Edit Membership ID">&#127380;</button>
         <button class="btn-icon" onclick="approveMember('${m.id}')" title="Approve">&#10003;</button>
         <button class="btn-icon red" onclick="deleteMember('${m.id}','${m.fullName||m.firstName}')" title="Delete">&#128465;</button>
       </td>
@@ -553,6 +578,52 @@ async function deleteMember(uid, name) {
   if (!confirm(`Delete member "${name}"? This cannot be undone.`)) return;
   await db.collection("members").doc(uid).delete();
   loadMembersTable(); loadDashboardStats();
+}
+
+// ===== EDIT MEMBERSHIP ID =====
+function editMembershipID(uid, currentID) {
+  document.getElementById("editIDDocId").value = uid;
+  document.getElementById("editIDCurrent").value = currentID || "—";
+  document.getElementById("editIDNew").value = currentID || "";
+  document.getElementById("editIDResult").innerHTML = "";
+  document.getElementById("editIDModal").style.display = "flex";
+}
+
+async function saveMembershipID() {
+  const res = document.getElementById("editIDResult");
+  const uid = document.getElementById("editIDDocId").value;
+  const newID = document.getElementById("editIDNew").value.trim().toUpperCase();
+
+  if (!newID) { res.innerHTML = '<span class="error-msg">Please enter a membership ID.</span>'; return; }
+
+  res.innerHTML = "Checking availability...";
+  try {
+    // Check uniqueness (excluding the current member)
+    const dupSnap = await db.collection("members").where("membershipID","==",newID).get();
+    const conflict = dupSnap.docs.find(d => d.id !== uid);
+    if (conflict) {
+      res.innerHTML = '<span class="error-msg">This Membership ID is already assigned to another member.</span>';
+      return;
+    }
+
+    res.innerHTML = "Saving...";
+    await db.collection("members").doc(uid).update({ membershipID: newID });
+
+    // Notify the member
+    await db.collection("notifications").add({
+      type: "id_update",
+      title: "Membership ID Updated",
+      message: `Your Membership ID has been updated to ${newID} by the State Administrator.`,
+      userId: uid, global: false, read: false,
+      createdAt: firebase.firestore.FieldValue.serverTimestamp()
+    });
+
+    res.innerHTML = '<span class="success-msg">&#10003; Membership ID updated!</span>';
+    loadMembersTable();
+    setTimeout(() => closeModal("editIDModal"), 1200);
+  } catch(e) {
+    res.innerHTML = `<span class="error-msg">${e.message}</span>`;
+  }
 }
 
 // ===== PENDING APPROVALS =====

@@ -4,6 +4,7 @@
 <meta charset="UTF-8"/><meta name="viewport" content="width=device-width,initial-scale=1"/>
 <title>My Profile — Royal Rangers Bayelsa</title>
 <link rel="stylesheet" href="css.css"/>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
 <style>
 /* ── Profile-specific styles ── */
 .profile-hero{background:linear-gradient(135deg,var(--dark) 0%,var(--blue) 100%);padding:0 0 0 0;color:#fff;position:relative}
@@ -20,8 +21,18 @@
 .profile-actions{display:flex;gap:10px}
 
 .profile-body{max-width:1100px;margin:32px auto;padding:0 1.5rem;display:grid;grid-template-columns:320px 1fr;gap:24px;align-items:start}
-.profile-sidebar{}
-.profile-main{}
+.profile-sidebar{
+    background:#fff;
+    padding:20px;
+    border-radius:10px;
+}
+
+.profile-main{
+    background:#fff;
+    padding:20px;
+    border-radius:10px;
+}
+
 
 /* Cards */
 .p-card{background:#fff;border-radius:var(--radius);border:1px solid var(--border);box-shadow:var(--shadow);margin-bottom:16px;overflow:hidden}
@@ -48,10 +59,11 @@
 .mini-card-id{font-family:monospace;font-size:11px;color:rgba(255,255,255,.6);float:right}
 .mini-card-name{font-size:1rem;font-weight:700;margin:12px 0 2px}
 .mini-card-rank{font-size:12px;color:var(--gold)}
-.mini-card-footer{display:flex;justify-content:space-between;align-items:flex-end;margin-top:14px;padding-top:12px;border-top:1px solid rgba(255,255,255,.15)}
+.mini-card-footer{display:flex;justify-content:space-between;align-items:flex-end;margin-top:14px;padding-top:12px;border-top:1px solid rgba(255,255,255,.15);gap:8px}
 .mini-card-detail{font-size:10px}
 .mini-card-detail .lbl{color:rgba(255,255,255,.5)}
 .mini-card-detail .val{font-weight:600;font-size:11px}
+#mcQR canvas,#mcQR img{display:block;width:46px !important;height:46px !important}
 
 /* Progress bar */
 .rank-progress{margin:8px 0}
@@ -199,6 +211,7 @@
             <div class="mini-card-detail"><div class="lbl">District</div><div class="val" id="mcDistrict">—</div></div>
             <div class="mini-card-detail"><div class="lbl">Outpost</div><div class="val" id="mcOutpost">—</div></div>
             <div class="mini-card-detail"><div class="lbl">Valid</div><div class="val" id="mcValid">—</div></div>
+            <div id="mcQR" style="background:#fff;border-radius:6px;padding:3px;line-height:0"></div>
           </div>
         </div>
         <div style="padding:12px">
@@ -440,7 +453,10 @@
     <!-- CERTIFICATIONS TAB -->
     <div class="p-tab-content" id="tab-certs">
       <div class="p-card">
-        <div class="p-card-header"><h3>&#127891; Certifications & Awards</h3></div>
+        <div class="p-card-header">
+          <h3>&#127891; Certifications & Awards</h3>
+          <button class="btn btn-blue" style="font-size:12px;padding:6px 14px" onclick="openAddModal('cert')">+ Add Certification</button>
+        </div>
         <div class="p-card-body">
           <div id="certsList">
             <div class="loading-msg">Loading certifications...</div>
@@ -448,7 +464,10 @@
         </div>
       </div>
       <div class="p-card">
-        <div class="p-card-header"><h3>&#127946; Training Records</h3></div>
+        <div class="p-card-header">
+          <h3>&#127946; Training Records</h3>
+          <button class="btn btn-blue" style="font-size:12px;padding:6px 14px" onclick="openAddModal('training')">+ Add Training Record</button>
+        </div>
         <div class="p-card-body">
           <div id="trainingRecordsList">
             <div class="loading-msg">Loading training records...</div>
@@ -474,7 +493,10 @@
       <div class="p-card">
         <div class="p-card-header">
           <h3>&#128203; Appointment History</h3>
-          <span id="apptCount" style="font-size:12px;color:var(--muted)"></span>
+          <div style="display:flex;align-items:center;gap:10px">
+            <span id="apptCount" style="font-size:12px;color:var(--muted)"></span>
+            <button class="btn btn-blue" style="font-size:12px;padding:6px 14px" onclick="openAddModal('appointment')">+ Add Appointment</button>
+          </div>
         </div>
         <div class="p-card-body" id="appointmentsList">
           <div class="loading-msg">Loading appointments...</div>
@@ -513,6 +535,98 @@
 
   </div><!-- /profile-main -->
 </div><!-- /profile-body -->
+
+<!-- ===== ADD CERTIFICATION MODAL ===== -->
+<div id="addCertModal" class="modal" style="display:none">
+  <div class="modal-box" style="max-width:460px">
+    <h3>&#127891; Add Certification</h3>
+    <p style="font-size:12px;color:var(--muted);margin-bottom:16px">Submitted certifications are added to your profile immediately. Admins may verify or remove entries that cannot be confirmed.</p>
+    <div class="form-group">
+      <label>Certification Name *</label>
+      <input id="certName" placeholder="e.g. Basic Training Certificate" required/>
+    </div>
+    <div class="form-group">
+      <label>Issuing Body</label>
+      <input id="certIssuer" placeholder="e.g. Royal Rangers Bayelsa State Command"/>
+    </div>
+    <div class="form-group">
+      <label>Date Earned</label>
+      <input id="certDateEarned" type="date"/>
+    </div>
+    <div id="certModalResult" class="form-result" style="margin:10px 0"></div>
+    <div style="display:flex;gap:10px">
+      <button class="btn btn-blue" onclick="submitCertification()">&#10003; Add</button>
+      <button class="btn btn-outline-dark" onclick="closeAddModal('addCertModal')">Cancel</button>
+    </div>
+  </div>
+</div>
+
+<!-- ===== ADD TRAINING RECORD MODAL ===== -->
+<div id="addTrainingModal" class="modal" style="display:none">
+  <div class="modal-box" style="max-width:460px">
+    <h3>&#127946; Add Training Record</h3>
+    <p style="font-size:12px;color:var(--muted);margin-bottom:16px">Record a training program you have attended or completed.</p>
+    <div class="form-group">
+      <label>Training Name *</label>
+      <input id="trainName" placeholder="e.g. Outpost Commander Training" required/>
+    </div>
+    <div class="form-group">
+      <label>Date</label>
+      <input id="trainDate" type="date"/>
+    </div>
+    <div class="form-group">
+      <label>Status</label>
+      <select id="trainStatus">
+        <option>Completed</option>
+        <option>In Progress</option>
+        <option>Attended</option>
+      </select>
+    </div>
+    <div id="trainModalResult" class="form-result" style="margin:10px 0"></div>
+    <div style="display:flex;gap:10px">
+      <button class="btn btn-blue" onclick="submitTraining()">&#10003; Add</button>
+      <button class="btn btn-outline-dark" onclick="closeAddModal('addTrainingModal')">Cancel</button>
+    </div>
+  </div>
+</div>
+
+<!-- ===== ADD APPOINTMENT MODAL ===== -->
+<div id="addApptModal" class="modal" style="display:none">
+  <div class="modal-box" style="max-width:460px">
+    <h3>&#127381; Add Appointment Held</h3>
+    <p style="font-size:12px;color:var(--muted);margin-bottom:16px">Record a leadership position or appointment you have held within Royal Rangers.</p>
+    <div class="form-group">
+      <label>Position / Title *</label>
+      <input id="apptTitle" placeholder="e.g. Outpost Commander" required/>
+    </div>
+    <div class="form-group">
+      <label>Unit / Outpost / District</label>
+      <input id="apptUnit" placeholder="e.g. Faith Outpost, Bayelsa North"/>
+    </div>
+    <div class="form-row">
+      <div class="form-group">
+        <label>Start Date</label>
+        <input id="apptStartDate" type="date"/>
+      </div>
+      <div class="form-group">
+        <label>End Date (leave blank if current)</label>
+        <input id="apptEndDate" type="date"/>
+      </div>
+    </div>
+    <div class="form-group">
+      <label>Appointed By</label>
+      <input id="apptAppointedBy" placeholder="e.g. State Commander"/>
+    </div>
+    <div class="form-group" style="background:#FDFAE3;border:1px solid #F9E79F;border-radius:8px;padding:10px;font-size:12px;color:#9A7D0A">
+      &#9888; Leaving the end date blank will set this as your <strong>current position</strong>, replacing any existing one.
+    </div>
+    <div id="apptModalResult" class="form-result" style="margin:10px 0"></div>
+    <div style="display:flex;gap:10px">
+      <button class="btn btn-blue" onclick="submitAppointment()">&#10003; Add</button>
+      <button class="btn btn-outline-dark" onclick="closeAddModal('addApptModal')">Cancel</button>
+    </div>
+  </div>
+</div>
 
 <!-- Toast -->
 <div class="toast" id="toast"></div>
@@ -581,6 +695,18 @@ function populateAll(u) {
   document.getElementById("mcDistrict").textContent = u.district||"—";
   document.getElementById("mcOutpost").textContent = u.outpost||"—";
   document.getElementById("mcValid").textContent = `${yr}–${yr+1}`;
+
+  // QR code → links to public verification page
+  const qrEl = document.getElementById("mcQR");
+  qrEl.innerHTML = "";
+  if (u.membershipID) {
+    new QRCode(qrEl, {
+      text: `${window.location.origin}/verify.html?id=${encodeURIComponent(u.membershipID)}`,
+      width: 46, height: 46,
+      colorDark: "#0D1B2A", colorLight: "#ffffff",
+      correctLevel: QRCode.CorrectLevel.M
+    });
+  }
 
   // Rank progress
   const rankIdx = RANKS.indexOf(u.rank||"Recruit");
@@ -1011,6 +1137,135 @@ async function loadNotifBadge(uid) {
       badge.style.display = "inline-block";
     }
   } catch(e) {}
+}
+
+// ── ADD MODALS: Certification / Training / Appointment ─────────────
+function openAddModal(type) {
+  const map = { cert:"addCertModal", training:"addTrainingModal", appointment:"addApptModal" };
+  document.getElementById(map[type]).style.display = "flex";
+}
+function closeAddModal(id) {
+  document.getElementById(id).style.display = "none";
+  // clear results/fields
+  document.querySelectorAll(`#${id} input`).forEach(i => i.value = "");
+  const resEl = document.querySelector(`#${id} .form-result`);
+  if (resEl) resEl.innerHTML = "";
+}
+
+// ── Submit: Certification ───────────────────────────────────────────
+async function submitCertification() {
+  const res = document.getElementById("certModalResult");
+  const name = document.getElementById("certName").value.trim();
+  if (!name) { res.innerHTML = '<span class="error-msg">Certification name is required.</span>'; return; }
+
+  const entry = {
+    name,
+    issuer: document.getElementById("certIssuer").value.trim() || "Self-reported",
+    dateEarned: document.getElementById("certDateEarned").value || "",
+    addedAt: new Date().toISOString(),
+    source: "member" // distinguishes from admin/course-issued certifications
+  };
+
+  res.innerHTML = "Saving...";
+  try {
+    await db.collection("members").doc(currentUser.uid).update({
+      certifications: firebase.firestore.FieldValue.arrayUnion(entry)
+    });
+    currentUser.certifications = [...(currentUser.certifications||[]), entry];
+    loadCertifications(currentUser);
+    showToast("Certification added!", "success");
+    closeAddModal("addCertModal");
+  } catch(e) {
+    res.innerHTML = `<span class="error-msg">${e.message}</span>`;
+  }
+}
+
+// ── Submit: Training Record ─────────────────────────────────────────
+async function submitTraining() {
+  const res = document.getElementById("trainModalResult");
+  const name = document.getElementById("trainName").value.trim();
+  if (!name) { res.innerHTML = '<span class="error-msg">Training name is required.</span>'; return; }
+
+  const dateVal = document.getElementById("trainDate").value;
+  const entry = {
+    name,
+    date: dateVal ? new Date(dateVal).toLocaleDateString("en-GB") : "",
+    status: document.getElementById("trainStatus").value,
+    addedAt: new Date().toISOString(),
+    source: "member"
+  };
+
+  res.innerHTML = "Saving...";
+  try {
+    await db.collection("members").doc(currentUser.uid).update({
+      trainingRecords: firebase.firestore.FieldValue.arrayUnion(entry)
+    });
+    currentUser.trainingRecords = [...(currentUser.trainingRecords||[]), entry];
+    loadCertifications(currentUser);
+    showToast("Training record added!", "success");
+    closeAddModal("addTrainingModal");
+  } catch(e) {
+    res.innerHTML = `<span class="error-msg">${e.message}</span>`;
+  }
+}
+
+// ── Submit: Appointment ─────────────────────────────────────────────
+async function submitAppointment() {
+  const res = document.getElementById("apptModalResult");
+  const title = document.getElementById("apptTitle").value.trim();
+  if (!title) { res.innerHTML = '<span class="error-msg">Position title is required.</span>'; return; }
+
+  const startDate = document.getElementById("apptStartDate").value;
+  const endDate = document.getElementById("apptEndDate").value;
+  const unit = document.getElementById("apptUnit").value.trim();
+  const appointedBy = document.getElementById("apptAppointedBy").value.trim();
+  const isCurrent = !endDate;
+
+  res.innerHTML = "Saving...";
+  try {
+    const updates = {};
+
+    if (isCurrent) {
+      // If this becomes the current position, archive the old current position (if any) into history first
+      const memberDoc = await db.collection("members").doc(currentUser.uid).get();
+      const m = memberDoc.data();
+      if (m.currentPosition || m.position || m.appointmentTitle) {
+        await db.collection("members").doc(currentUser.uid)
+          .collection("appointments").add({
+            title: m.currentPosition || m.position || m.appointmentTitle,
+            unit: m.appointmentUnit || m.district || "",
+            startDate: m.appointmentDate || "",
+            endDate: startDate || new Date().toISOString().slice(0,10),
+            status: "past",
+            appointedBy: m.appointedBy || "",
+            addedAt: new Date().toISOString()
+          });
+      }
+      updates.currentPosition = title;
+      updates.appointmentUnit = unit;
+      updates.appointmentDate = startDate || new Date().toISOString().slice(0,10);
+      updates.appointedBy = appointedBy;
+    } else {
+      // Past appointment — goes straight to subcollection
+      await db.collection("members").doc(currentUser.uid)
+        .collection("appointments").add({
+          title, unit, startDate, endDate, appointedBy,
+          status: "past",
+          addedAt: new Date().toISOString()
+        });
+    }
+
+    if (Object.keys(updates).length) {
+      await db.collection("members").doc(currentUser.uid).update(updates);
+      Object.assign(currentUser, updates);
+    }
+
+    loadAppointments(currentUser.uid);
+    showToast("Appointment added!", "success");
+    closeAddModal("addApptModal");
+  } catch(e) {
+    res.innerHTML = `<span class="error-msg">${e.message}</span>`;
+  }
 }
 
 // ── Tab switching ─────────────────────────────────────────────────
