@@ -459,6 +459,64 @@
   </div>
 </div>
 
+<!-- Promote / Change Rank Modal -->
+<div id="promoteModal" class="modal" style="display:none">
+  <div class="modal-box" style="max-width:460px">
+    <h3>&#127941; Promote Member</h3>
+    <p style="font-size:13px;color:var(--muted);margin-bottom:6px">Promoting <strong id="promoteMemberName">—</strong></p>
+    <input type="hidden" id="promoteDocId"/>
+
+    <div style="display:flex;align-items:center;gap:12px;background:var(--light);border-radius:10px;padding:14px;margin-bottom:18px">
+      <div style="flex:1;text-align:center">
+        <div style="font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;margin-bottom:4px">Current Rank</div>
+        <div id="promoteCurrentRank" style="font-weight:700;color:var(--text);font-size:14px">—</div>
+      </div>
+      <div style="font-size:20px;color:var(--gold)">&#8594;</div>
+      <div style="flex:1;text-align:center">
+        <div style="font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;margin-bottom:4px">New Rank</div>
+        <div id="promoteNewRankPreview" style="font-weight:700;color:var(--blue);font-size:14px">—</div>
+      </div>
+    </div>
+
+    <div class="form-group">
+      <label>Select New Rank</label>
+      <select id="promoteNewRank" onchange="document.getElementById('promoteNewRankPreview').textContent=this.value">
+        <option>Lance Corporal</option>
+        <option>Corporal</option>
+        <option>Sergeant</option>
+        <option>Staff Sergeant</option>
+        <option>Warrant Officer</option>
+        <option>Master Warrant Officer</option>
+        <option>Second Lieutenant</option>
+        <option>Lieutenant</option>
+        <option>Captain</option>
+        <option>Major</option>
+        <option>Lieutenant Colonel</option>
+        <option>Colonel</option>
+        <option>Brigadier General</option>
+        <option>Major General</option>
+        <option>Lieutenant General</option>
+        <option>General</option>
+      </select>
+    </div>
+
+    <div class="form-group">
+      <label>Reason / Citation (optional)</label>
+      <textarea id="promoteReason" rows="2" placeholder="e.g. Completed Outpost Commander Training with distinction"></textarea>
+    </div>
+
+    <div class="form-group" style="background:#EBF5FB;border:1px solid #AED6F1;border-radius:8px;padding:10px;font-size:12px;color:var(--blue)">
+      &#9432; This will update the member's rank everywhere — their dashboard, membership card, QR verification page, and notify them directly.
+    </div>
+
+    <div id="promoteResult" class="form-result" style="margin:10px 0"></div>
+    <div style="display:flex;gap:10px">
+      <button class="btn btn-red" onclick="confirmPromotion()">&#127941; Confirm Promotion</button>
+      <button class="btn btn-outline-dark" onclick="closeModal('promoteModal')">Cancel</button>
+    </div>
+  </div>
+</div>
+
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
@@ -623,6 +681,7 @@ function renderMembersTable(members) {
       <td>${m.phone||"—"}</td>
       <td><span class="status-badge status-${m.status||'pending'}">${m.status||"pending"}</span></td>
       <td>
+        <button class="btn-icon" onclick="openPromoteModal('${m.id}','${(m.fullName||m.firstName||'').replace(/'/g,"&#39;")}','${m.rank||'Lance Corporal'}')" title="Promote / Change Rank">&#127941;</button>
         <button class="btn-icon" onclick="editMembershipID('${m.id}','${m.membershipID||''}')" title="Edit Membership ID">&#127380;</button>
         <button class="btn-icon" onclick="approveMember('${m.id}')" title="Approve">&#10003;</button>
         <button class="btn-icon red" onclick="deleteMember('${m.id}','${m.fullName||m.firstName}')" title="Delete">&#128465;</button>
