@@ -3,6 +3,21 @@
 // Firebase Authentication: login, register, logout, reset
 // ============================================================
 
+// Retries a Firestore write once after a short delay if it fails with
+// permission-denied — this covers the rare race condition where a brand
+// new auth session hasn't fully propagated before the write fires.
+async function writeWithRetry(writeFn, retries = 2, delayMs = 700) {
+  try {
+    return await writeFn();
+  } catch (err) {
+    if (err.code === "permission-denied" && retries > 0) {
+      await new Promise(res => setTimeout(res, delayMs));
+      return writeWithRetry(writeFn, retries - 1, delayMs);
+    }
+    throw err;
+  }
+}
+
 // Generate unique membership ID: RR-BY-XXXX
 async function generateMembershipID() {
   const counterRef = db.collection("settings").doc("member_counter");
@@ -10,7 +25,7 @@ async function generateMembershipID() {
     const doc = await tx.get(counterRef);
     const next = (doc.exists ? doc.data().count : 0) + 1;
     tx.set(counterRef, { count: next }, { merge: true });
-    return "RR-BYSC-" + String(next).padStart(4, "0");
+    return "RR-BY-" + String(next).padStart(4, "0");
   });
 }
 
@@ -26,6 +41,12 @@ async function registerMember(formData, photoFile) {
   const cred = await auth.createUserWithEmailAndPassword(email, password);
   const uid = cred.user.uid;
 
+  // Force-refresh the ID token so Firestore security rules immediately
+  // recognize this user as authenticated. Without this, the very next
+  // Firestore write can intermittently fail with "permission-denied"
+  // because the new auth session hasn't fully propagated yet.
+  await cred.user.getIdToken(true);
+
   // Upload photo if provided
   let photoURL = "";
   if (photoFile) {
@@ -37,8 +58,9 @@ async function registerMember(formData, photoFile) {
   // Generate membership ID
   const membershipID = await generateMembershipID();
 
-  // Save to Firestore
-  await db.collection("members").doc(uid).set({
+  // Save to Firestore — with a short retry in case the auth session
+  // hasn't fully propagated to the security rules engine yet.
+  const memberData = {
     uid, email, firstName, lastName,
     fullName: `${firstName} ${lastName}`,
     dob: dob || "",
@@ -58,10 +80,12 @@ async function registerMember(formData, photoFile) {
     createdAt: firebase.firestore.FieldValue.serverTimestamp(),
     lastLogin: firebase.firestore.FieldValue.serverTimestamp(),
     birthday: dob ? dob.slice(5) : "" // MM-DD for birthday reminders
-  });
+  };
+
+  await writeWithRetry(() => db.collection("members").doc(uid).set(memberData));
 
   // Write safe public verification record (no sensitive data — for QR scan lookups)
-  await db.collection("public_verify").doc(membershipID).set({
+  const publicData = {
     uid, membershipID,
     fullName: `${firstName} ${lastName}`,
     rank: rank || "Recruit",
@@ -70,7 +94,9 @@ async function registerMember(formData, photoFile) {
     photoURL,
     status: "pending",
     memberSince: firebase.firestore.FieldValue.serverTimestamp()
-  });
+  };
+
+  await writeWithRetry(() => db.collection("public_verify").doc(membershipID).set(publicData));
 
   // Send email verification
   await cred.user.sendEmailVerification();
