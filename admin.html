@@ -92,8 +92,14 @@
       <div class="table-wrap">
         <table id="membersTable">
           <thead><tr>
-            <th>Photo</th><th>Membership ID</th><th>Full Name</th><th>District</th>
-            <th>Rank</th><th>Phone</th><th>Status</th><th>Actions</th>
+            <th>Photo</th>
+            <th class="sortable-th" onclick="sortMembersBy('membershipID')">Membership ID <span class="sort-arrow" id="sortArrow-membershipID">&#8593;</span></th>
+            <th class="sortable-th" onclick="sortMembersBy('fullName')">Full Name <span class="sort-arrow" id="sortArrow-fullName"></span></th>
+            <th class="sortable-th" onclick="sortMembersBy('district')">District <span class="sort-arrow" id="sortArrow-district"></span></th>
+            <th class="sortable-th" onclick="sortMembersBy('rank')">Rank <span class="sort-arrow" id="sortArrow-rank"></span></th>
+            <th>Phone</th>
+            <th class="sortable-th" onclick="sortMembersBy('status')">Status <span class="sort-arrow" id="sortArrow-status"></span></th>
+            <th>Actions</th>
           </tr></thead>
           <tbody id="membersBody"><tr><td colspan="8" class="loading-msg">Loading...</td></tr></tbody>
         </table>
@@ -527,11 +533,64 @@ async function loadDashboardStats() {
 }
 
 // ===== MEMBERS =====
+let currentSortField = "membershipID";
+let currentSortDir = "asc";
+
 async function loadMembersTable() {
   const snap = await db.collection("members").orderBy("createdAt","desc").get();
   allMembers = [];
   snap.forEach(doc => allMembers.push({ id: doc.id, ...doc.data() }));
-  renderMembersTable(allMembers);
+  applySortAndRender(allMembers);
+}
+
+function sortMembersBy(field) {
+  if (currentSortField === field) {
+    currentSortDir = currentSortDir === "asc" ? "desc" : "asc";
+  } else {
+    currentSortField = field;
+    currentSortDir = "asc";
+  }
+  updateSortArrows();
+  // Re-apply current search/filter, then sort
+  const q = document.getElementById("memberSearch").value;
+  const status = document.getElementById("memberFilterStatus").value;
+  const district = document.getElementById("memberFilterDistrict").value;
+  let list = allMembers;
+  if (q) list = filterBySearch(list, q);
+  if (status) list = list.filter(m => m.status === status);
+  if (district) list = list.filter(m => m.district === district);
+  applySortAndRender(list, false); // false = list already filtered, just sort+render
+}
+
+function updateSortArrows() {
+  ["membershipID","fullName","district","rank","status"].forEach(f => {
+    const el = document.getElementById(`sortArrow-${f}`);
+    if (!el) return;
+    el.textContent = f === currentSortField ? (currentSortDir === "asc" ? "↑" : "↓") : "";
+  });
+}
+
+function sortMemberList(list) {
+  const field = currentSortField;
+  const dir = currentSortDir === "asc" ? 1 : -1;
+  return [...list].sort((a, b) => {
+    let valA = (a[field] || "").toString();
+    let valB = (b[field] || "").toString();
+
+    // Natural sort for membership IDs like RR-BY-0001, RR-BY-0010, RR-BY-0002
+    if (field === "membershipID") {
+      const numA = parseInt(valA.match(/(\d+)$/)?.[1] || 0, 10);
+      const numB = parseInt(valB.match(/(\d+)$/)?.[1] || 0, 10);
+      if (numA !== numB) return (numA - numB) * dir;
+    }
+    return valA.localeCompare(valB) * dir;
+  });
+}
+
+function applySortAndRender(list) {
+  const sorted = sortMemberList(list);
+  renderMembersTable(sorted);
+  updateSortArrows();
 }
 
 function renderMembersTable(members) {
@@ -554,15 +613,19 @@ function renderMembersTable(members) {
     </tr>`).join("");
 }
 
-function searchMembers(q) {
+function filterBySearch(list, q) {
   q = q.toLowerCase();
-  const filtered = allMembers.filter(m =>
+  return list.filter(m =>
     (m.fullName||"").toLowerCase().includes(q) ||
     (m.membershipID||"").toLowerCase().includes(q) ||
     (m.district||"").toLowerCase().includes(q) ||
     (m.phone||"").includes(q)
   );
-  renderMembersTable(filtered);
+}
+
+function searchMembers(q) {
+  const filtered = q ? filterBySearch(allMembers, q) : allMembers;
+  applySortAndRender(filtered);
 }
 
 function filterMembers() {
@@ -572,7 +635,7 @@ function filterMembers() {
     (!status || m.status === status) &&
     (!district || m.district === district)
   );
-  renderMembersTable(filtered);
+  applySortAndRender(filtered);
 }
 
 async function approveMember(uid) {

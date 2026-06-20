@@ -299,6 +299,9 @@ footer ul li a:hover{color:var(--gold)}
 .table-wrap{overflow-x:auto;border-radius:var(--radius);border:1px solid var(--border)}
 table{width:100%;border-collapse:collapse;font-size:13px;background:#fff}
 th{text-align:left;padding:10px 14px;color:var(--muted);font-weight:600;font-size:12px;border-bottom:1px solid var(--border);background:var(--light);white-space:nowrap}
+.sortable-th{cursor:pointer;user-select:none;transition:.15s}
+.sortable-th:hover{color:var(--blue);background:#EBF5FB}
+.sort-arrow{display:inline-block;width:10px;font-size:11px;color:var(--blue);font-weight:700}
 td{padding:11px 14px;border-bottom:1px solid #f5f6fa;color:var(--text);vertical-align:middle}
 tr:last-child td{border:none}
 tr:hover td{background:#FAFBFC}

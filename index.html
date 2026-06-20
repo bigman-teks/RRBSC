@@ -7,6 +7,12 @@
 <title>Royal Rangers — Bayelsa State Command</title>
 <link rel="manifest" href="manifest.json"/>
 <link rel="icon" href="assets/images/favicon.ico"/>
+<link rel="apple-touch-icon" href="assets/images/icon-192.png"/>
+<meta name="theme-color" content="#1A5276"/>
+<meta name="mobile-web-app-capable" content="yes"/>
+<meta name="apple-mobile-web-app-capable" content="yes"/>
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent"/>
+<meta name="apple-mobile-web-app-title" content="RR Bayelsa"/>
 <link rel="stylesheet" href="css.css"/>
 </head>
 <body>
@@ -36,6 +42,7 @@
       <a href="register.html" class="btn btn-red">Join Now</a>
     </div>
     <button class="hamburger" onclick="toggleMenu()" aria-label="Menu">&#9776;</button>
+    <button id="installAppBtn" class="btn btn-gold" style="display:none;margin-left:8px;font-size:12px;padding:7px 14px" onclick="triggerInstall()">&#8595; Install App</button>
   </div>
 </nav>
 
@@ -421,6 +428,56 @@ document.getElementById("contactForm").addEventListener("submit", async e => {
 
 function toggleMenu() {
   document.getElementById("navLinks").classList.toggle("open");
+}
+
+// ===== PWA: SERVICE WORKER REGISTRATION =====
+if ("serviceWorker" in navigator) {
+  window.addEventListener("load", () => {
+    navigator.serviceWorker.register("/sw.js")
+      .then(reg => console.log("Service worker registered:", reg.scope))
+      .catch(err => console.warn("Service worker registration failed:", err));
+  });
+}
+
+// ===== PWA: INSTALL PROMPT HANDLING =====
+let deferredInstallPrompt = null;
+
+window.addEventListener("beforeinstallprompt", (e) => {
+  // Chrome/Edge/Android fire this when the app is installable
+  e.preventDefault();
+  deferredInstallPrompt = e;
+  document.getElementById("installAppBtn").style.display = "inline-block";
+});
+
+async function triggerInstall() {
+  if (!deferredInstallPrompt) return;
+  deferredInstallPrompt.prompt();
+  const { outcome } = await deferredInstallPrompt.userChoice;
+  if (outcome === "accepted") {
+    document.getElementById("installAppBtn").style.display = "none";
+  }
+  deferredInstallPrompt = null;
+}
+
+window.addEventListener("appinstalled", () => {
+  document.getElementById("installAppBtn").style.display = "none";
+  deferredInstallPrompt = null;
+});
+
+// iOS Safari has no install prompt API — show manual instructions instead
+function isIOS() {
+  return /iphone|ipad|ipod/.test(navigator.userAgent.toLowerCase());
+}
+function isInStandaloneMode() {
+  return window.matchMedia("(display-mode: standalone)").matches || window.navigator.standalone === true;
+}
+if (isIOS() && !isInStandaloneMode()) {
+  const btn = document.getElementById("installAppBtn");
+  btn.style.display = "inline-block";
+  btn.textContent = "📱 Add to Home Screen";
+  btn.onclick = () => {
+    alert("To install this app on your iPhone/iPad:\n\n1. Tap the Share button (square with an arrow) in Safari's toolbar\n2. Scroll down and tap \"Add to Home Screen\"\n3. Tap \"Add\" in the top right");
+  };
 }
 
 // ===== VERIFY MEMBERSHIP WIDGET =====
