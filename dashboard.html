@@ -280,29 +280,136 @@ async function downloadCard() {
   const { jsPDF } = window.jspdf;
   const doc = new jsPDF({ orientation: "landscape", unit: "mm", format: [85.6, 53.98] });
   const u = currentUser;
-  doc.setFillColor(26, 82, 118);
-  doc.rect(0, 0, 85.6, 53.98, "F");
-  // Logo (if set) — top-left corner
-  if (APP_CONFIG.LOGO_URL && APP_CONFIG.LOGO_URL !== "PASTE_LOGO_LINK_HERE") {
+  const cardW = 85.6, cardH = 53.98;
+
+  // ── Background ──
+  doc.setFillColor(13, 27, 42); // var(--dark)
+  doc.rect(0, 0, cardW, cardH, "F");
+  doc.setFillColor(26, 82, 118); // var(--blue) gradient base
+  doc.rect(0, 0, cardW, cardH * 0.55, "F");
+
+  // ── Gold border frame ──
+  doc.setDrawColor(212, 172, 13);
+  doc.setLineWidth(0.6);
+  doc.rect(1, 1, cardW - 2, cardH - 2);
+
+  // ── Logo (top-left) ──
+  if (APP_CONFIG.LOGO_URL && APP_CONFIG.LOGO_URL !== "PASTE_LOGO_LINK_HERE" && !APP_CONFIG.LOGO_URL.startsWith("file://")) {
     try {
       doc.setFillColor(255,255,255);
-      doc.roundedRect(3, 2, 11, 11, 1, 1, "F");
-      await doc.addImage(APP_CONFIG.LOGO_URL, "PNG", 3.5, 2.5, 10, 10);
+      doc.roundedRect(3, 2.5, 10, 10, 1, 1, "F");
+      await new Promise((resolve) => {
+        const img = new Image();
+        img.crossOrigin = "anonymous";
+        img.onload = () => {
+          try { doc.addImage(img, "PNG", 3.5, 3, 9, 9); } catch(e) {}
+          resolve();
+        };
+        img.onerror = resolve;
+        img.src = APP_CONFIG.LOGO_URL;
+      });
     } catch(e) {}
   }
-  doc.setFontSize(7); doc.setTextColor(212, 172, 13);
-  doc.text("ROYAL RANGERS — BAYELSA STATE COMMAND", 42.8, 5, { align: "center" });
-  doc.setTextColor(255,255,255); doc.setFontSize(11); doc.setFont(undefined,"bold");
-  doc.text(u.fullName || `${u.firstName} ${u.lastName}`, 42.8, 20, { align: "center" });
-  doc.setFontSize(8); doc.setFont(undefined,"normal"); doc.setTextColor(212,172,13);
-  doc.text(u.rank || "Recruit", 42.8, 26, { align: "center" });
-  doc.setTextColor(255,255,255); doc.setFontSize(7);
-  doc.text(`ID: ${u.membershipID||"—"}`, 42.8, 32, { align: "center" });
-  doc.text(`District: ${u.district||"—"}  |  Outpost: ${u.outpost||"—"}`, 42.8, 37, { align: "center" });
-  doc.text(`Status: ${u.status||"—"}  |  Valid: ${new Date().getFullYear()} – ${new Date().getFullYear()+1}`, 42.8, 42, { align: "center" });
-  doc.setFontSize(6); doc.setTextColor(150,180,200);
-  doc.text("Assemblies of God Nigeria", 42.8, 50, { align: "center" });
-  doc.save(`RR_Card_${u.membershipID||u.firstName}.pdf`);
+
+  // ── Header text ──
+  doc.setFontSize(7.5); doc.setTextColor(212, 172, 13);
+  doc.setFont(undefined, "bold");
+  doc.text("ROYAL RANGERS", 15.5, 5.5);
+  doc.setFontSize(5.5); doc.setTextColor(220, 230, 240);
+  doc.setFont(undefined, "normal");
+  doc.text("BAYELSA STATE COMMAND", 15.5, 8.5);
+
+  // ── Membership ID (top-right) ──
+  doc.setFontSize(6.5); doc.setTextColor(255, 255, 255);
+  doc.setFont(undefined, "bold");
+  doc.text(u.membershipID || "—", cardW - 3, 6, { align: "right" });
+
+  // ── Member name & rank (left side) ──
+  doc.setFontSize(11); doc.setTextColor(255, 255, 255);
+  doc.setFont(undefined, "bold");
+  doc.text(u.fullName || `${u.firstName} ${u.lastName}`, 4, 17);
+
+  doc.setFontSize(7.5); doc.setTextColor(212, 172, 13);
+  doc.setFont(undefined, "normal");
+  doc.text(`★ ${u.rank || "Lance Corporal"}`, 4, 22);
+
+  // ── Detail fields (left side, below name) ──
+  const yr = new Date().getFullYear();
+  doc.setFontSize(6); doc.setTextColor(180, 195, 210);
+  doc.setFont(undefined, "normal");
+  doc.text("DISTRICT", 4, 30); doc.text("OUTPOST", 4, 37);
+  doc.setTextColor(255, 255, 255); doc.setFont(undefined, "bold");
+  doc.setFontSize(6.5);
+  doc.text(u.district || "—", 4, 33.2); doc.text(u.outpost || "—", 4, 40.2);
+
+  doc.setFontSize(6); doc.setTextColor(180, 195, 210); doc.setFont(undefined, "normal");
+  doc.text("MEMBER SINCE", 30, 30); doc.text("STATUS", 30, 37);
+  doc.setTextColor(255, 255, 255); doc.setFont(undefined, "bold");
+  doc.setFontSize(6.5);
+  const since = u.createdAt?.toDate
+    ? u.createdAt.toDate().toLocaleDateString("en-GB", { month: "short", year: "numeric" })
+    : "—";
+  doc.text(since, 30, 33.2);
+  doc.text(u.status === "active" ? "✓ Active" : (u.status || "—"), 30, 40.2);
+
+  // ── Footer line ──
+  doc.setDrawColor(212, 172, 13); doc.setLineWidth(0.2);
+  doc.line(4, 44, cardW - 4, 44);
+  doc.setFontSize(5.5); doc.setTextColor(160, 175, 190); doc.setFont(undefined, "normal");
+  doc.text(`Valid: ${yr} – ${yr + 1}`, 4, 48);
+  doc.setFontSize(5); doc.setTextColor(140, 155, 170);
+  doc.text("Assemblies of God Nigeria", 4, 51.5);
+
+  // ── QR CODE — large, high-contrast, clearly visible (right side) ──
+  if (u.membershipID) {
+    try {
+      const baseUrl = getSiteBaseUrl();
+      const qrUrl = baseUrl
+        ? `${baseUrl}/verify.html?id=${encodeURIComponent(u.membershipID)}`
+        : `https://royalrangerbayelsastate.vercel.app/verify.html?id=${encodeURIComponent(u.membershipID)}`;
+
+      // Render QR into an off-screen container at high resolution
+      const qrContainer = document.createElement("div");
+      qrContainer.style.position = "fixed";
+      qrContainer.style.left = "-9999px";
+      document.body.appendChild(qrContainer);
+
+      new QRCode(qrContainer, {
+        text: qrUrl,
+        width: 240,          // high-res render for crisp print quality
+        height: 240,
+        colorDark: "#0D1B2A",
+        colorLight: "#ffffff",
+        correctLevel: QRCode.CorrectLevel.H  // High error-correction for reliable scanning
+      });
+
+      // Wait a tick for the QR library to finish drawing to canvas
+      await new Promise(resolve => setTimeout(resolve, 150));
+
+      const qrCanvas = qrContainer.querySelector("canvas");
+      if (qrCanvas) {
+        const qrDataUrl = qrCanvas.toDataURL("image/png");
+
+        // White card backing so QR has clean contrast margin (quiet zone)
+        const qrSize = 24; // mm — large enough to scan easily on a printed card
+        const qrX = cardW - qrSize - 3;
+        const qrY = cardH - qrSize - 3;
+        doc.setFillColor(255, 255, 255);
+        doc.roundedRect(qrX - 1.5, qrY - 1.5, qrSize + 3, qrSize + 3, 1.5, 1.5, "F");
+        doc.addImage(qrDataUrl, "PNG", qrX, qrY, qrSize, qrSize);
+
+        // Small label under/beside QR
+        doc.setFontSize(4.5); doc.setTextColor(13, 27, 42); doc.setFont(undefined, "bold");
+        doc.text("SCAN TO VERIFY", qrX + qrSize/2, qrY - 2.2, { align: "center" });
+      }
+
+      document.body.removeChild(qrContainer);
+    } catch (e) {
+      console.warn("QR embed failed, continuing without it:", e);
+    }
+  }
+
+  doc.save(`RR_Card_${u.membershipID || u.firstName}.pdf`);
 }
 
 function toggleMenu() { document.getElementById("navLinks").classList.toggle("open"); }
