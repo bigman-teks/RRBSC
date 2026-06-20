@@ -225,4 +225,29 @@ async function updateMemberProfile(uid, updates, newPhotoFile) {
     updates.fullName = `${updates.firstName} ${updates.lastName}`;
   }
   await db.collection("members").doc(uid).update(updates);
+
+  // Keep public_verify in sync whenever any card-visible field changes,
+  // so the QR scan result on verify.html always matches the printed card.
+  const verifyFields = ["fullName", "rank", "district", "outpost", "photoURL", "status"];
+  const hasVisibleChange = verifyFields.some(f => f in updates);
+  if (hasVisibleChange) {
+    try {
+      const doc = await db.collection("members").doc(uid).get();
+      const m = doc.data();
+      if (m.membershipID) {
+        await db.collection("public_verify").doc(m.membershipID).set({
+          uid,
+          membershipID: m.membershipID,
+          fullName: m.fullName || "",
+          rank: m.rank || "Lance Corporal",
+          district: m.district || "",
+          outpost: m.outpost || "",
+          photoURL: m.photoURL || "",
+          status: m.status || "pending"
+        }, { merge: true });
+      }
+    } catch (e) {
+      console.warn("public_verify sync skipped:", e.message);
+    }
+  }
 }
