@@ -422,7 +422,7 @@
             <div class="form-group">
               <label>New Password *</label>
               <div class="pw-wrap">
-                <input id="newPw" type="password" placeholder="Min 8 characters" required oninput="checkPwStrength(this.value)"/>
+                <input id="newPw" type="password" placeholder="Min 6 characters" required oninput="checkPwStrength(this.value)"/>
                 <button type="button" class="pw-toggle" onclick="togglePw('newPw')">&#128065;</button>
               </div>
               <div id="pwStrengthBar" class="pw-strength" style="width:0%;background:var(--red)"></div>
@@ -858,8 +858,8 @@ async function changePassword(e) {
   if (newPw !== confirmPw) {
     res.innerHTML = '<span class="error-msg">New passwords do not match.</span>'; return;
   }
-  if (newPw.length < 8) {
-    res.innerHTML = '<span class="error-msg">Password must be at least 8 characters.</span>'; return;
+  if (newPw.length < 6) {
+    res.innerHTML = '<span class="error-msg">Password must be at least 6 characters.</span>'; return;
   }
   btn.disabled = true; btn.textContent = "Updating…";
   try {

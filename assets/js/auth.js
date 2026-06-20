@@ -10,181 +10,102 @@ async function generateMembershipID() {
     const doc = await tx.get(counterRef);
     const next = (doc.exists ? doc.data().count : 0) + 1;
     tx.set(counterRef, { count: next }, { merge: true });
-    return "RR-BY-" + String(next).padStart(4, "0");
+    return "RR-BYSC-" + String(next).padStart(4, "0");
   });
 }
 
 // REGISTER
-// REGISTER
 async function registerMember(formData, photoFile) {
-  try {
+  const { email, password, firstName, lastName, dob, gender, phone,
+          address, church, outpost, district, rank } = formData;
 
-    const {
-      email,
-      password,
-      firstName,
-      lastName,
-      dob,
-      gender,
-      phone,
-      address,
-      church,
-      outpost,
-      district,
-      rank
-    } = formData;
+  if (!email || !password || !firstName || !lastName) throw new Error("Please fill all required fields.");
+  if (password.length < 6) throw new Error("Password must be at least 6 characters.");
 
-    console.log("STEP 1: Creating auth user");
+  // Create auth user
+  const cred = await auth.createUserWithEmailAndPassword(email, password);
+  const uid = cred.user.uid;
 
-    const cred = await auth.createUserWithEmailAndPassword(
-      email,
-      password
-    );
-
-    const uid = cred.user.uid;
-
-    console.log("STEP 2: Auth user created", uid);
-
-    // Photo Upload
-    let photoURL = "";
-
-    if (photoFile) {
-      try {
-        console.log("STEP 3: Uploading photo");
-
-        const ref = storage.ref(
-          `profile_photos/${uid}/${photoFile.name}`
-        );
-
-        await ref.put(photoFile);
-
-        photoURL = await ref.getDownloadURL();
-
-        console.log("Photo uploaded");
-      } catch (photoError) {
-        console.warn("Photo upload failed:", photoError);
-      }
-    }
-
-    // Membership ID
-    let membershipID;
-
-    try {
-      console.log("STEP 4: Generating membership ID");
-
-      membershipID = await generateMembershipID();
-
-    } catch (counterError) {
-
-      console.warn("Counter error:", counterError);
-
-      membershipID =
-        "RR-BY-" + Date.now().toString().slice(-6);
-    }
-
-    console.log("Membership ID:", membershipID);
-
-    // Firestore Save
-    console.log("STEP 5: Saving member document");
-
-    const memberData = {
-      uid,
-      email,
-      firstName,
-      lastName,
-      fullName: `${firstName} ${lastName}`,
-      dob: dob || "",
-      gender: gender || "",
-      phone: phone || "",
-      address: address || "",
-      church: church || "",
-      outpost: outpost || "",
-      district: district || "",
-      rank: rank || "Recruit",
-      membershipID,
-      photoURL,
-      role: "member",
-      status: "pending",
-      certifications: [],
-      trainingRecords: [],
-      birthday: dob ? dob.slice(5) : "",
-      createdAt: firebase.firestore.FieldValue.serverTimestamp(),
-      lastLogin: firebase.firestore.FieldValue.serverTimestamp()
-    };
-
-    alert("STEP 5: About to save member document");
-    await db
-      .collection("members")
-      .doc(uid)
-      .set(memberData);
-
-    console.log("STEP 6: Member document saved");
-
-    // Notification (optional)
-    try {
-      await db.collection("notifications").add({
-        type: "new_member",
-        title: "New Member Registration",
-        message: `${firstName} ${lastName} (${membershipID}) registered.`,
-        targetRole: "state_admin",
-        read: false,
-        createdAt: firebase.firestore.FieldValue.serverTimestamp()
-      });
-
-      console.log("Notification created");
-
-    } catch (notifyError) {
-      console.warn("Notification error:", notifyError);
-    }
-
-    // Verification Email
-    try {
-      await cred.user.sendEmailVerification();
-      console.log("Verification email sent");
-    } catch (verifyError) {
-      console.warn("Verification email error:", verifyError);
-    }
-
-    return {
-      uid,
-      membershipID
-    };
-
-  } catch (error) {
-
-    console.error(
-      "REGISTRATION ERROR:",
-      error.code,
-      error.message
-    );
-
-    throw error;
+  // Upload photo if provided
+  let photoURL = "";
+  if (photoFile) {
+    const ref = storage.ref(`profile_photos/${uid}/${photoFile.name}`);
+    await ref.put(photoFile);
+    photoURL = await ref.getDownloadURL();
   }
+
+  // Generate membership ID
+  const membershipID = await generateMembershipID();
+
+  // Save to Firestore
+  await db.collection("members").doc(uid).set({
+    uid, email, firstName, lastName,
+    fullName: `${firstName} ${lastName}`,
+    dob: dob || "",
+    gender: gender || "",
+    phone: phone || "",
+    address: address || "",
+    church: church || "",
+    outpost: outpost || "",
+    district: district || "",
+    rank: rank || "Recruit",
+    membershipID,
+    photoURL,
+    role: "member",
+    status: "pending",
+    certifications: [],
+    trainingRecords: [],
+    createdAt: firebase.firestore.FieldValue.serverTimestamp(),
+    lastLogin: firebase.firestore.FieldValue.serverTimestamp(),
+    birthday: dob ? dob.slice(5) : "" // MM-DD for birthday reminders
+  });
+
+  // Write safe public verification record (no sensitive data — for QR scan lookups)
+  await db.collection("public_verify").doc(membershipID).set({
+    uid, membershipID,
+    fullName: `${firstName} ${lastName}`,
+    rank: rank || "Recruit",
+    district: district || "",
+    outpost: outpost || "",
+    photoURL,
+    status: "pending",
+    memberSince: firebase.firestore.FieldValue.serverTimestamp()
+  });
+
+  // Send email verification
+  await cred.user.sendEmailVerification();
+
+  // Notify admins
+  await db.collection("notifications").add({
+    type: "new_member",
+    title: "New Member Registration",
+    message: `${firstName} ${lastName} (${membershipID}) registered and awaiting approval.`,
+    global: false,
+    targetRole: "state_admin",
+    userId: "admins",
+    read: false,
+    createdAt: firebase.firestore.FieldValue.serverTimestamp()
+  });
+
+  return { uid, membershipID };
 }
 
 // LOGIN
 async function loginMember(email, password) {
+  if (!email || !password) throw new Error("Email and password are required.");
   const cred = await auth.signInWithEmailAndPassword(email, password);
   const uid = cred.user.uid;
 
-  let docRef = db.collection("members").doc(uid);
-  let doc = await docRef.get();
+  // Update last login
+  await db.collection("members").doc(uid).update({
+    lastLogin: firebase.firestore.FieldValue.serverTimestamp()
+  });
 
-  if (!doc.exists) {
-    const userData = {
-      uid,
-      email: cred.user.email,
-      fullName: cred.user.displayName || "Administrator",
-      role: "super_admin",
-      status: "approved",
-      createdAt: firebase.firestore.FieldValue.serverTimestamp()
-    };
-
-    await docRef.set(userData);
-    return userData;
-  }
-
-  return doc.data();
+  // Get user role for redirect
+  const doc = await db.collection("members").doc(uid).get();
+  if (!doc.exists) throw new Error("Member record not found.");
+  const data = doc.data();
+  return data;
 }
 
 // LOGOUT
