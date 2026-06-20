@@ -10,6 +10,7 @@ async function writeWithRetry(writeFn, retries = 2, delayMs = 700) {
   try {
     return await writeFn();
   } catch (err) {
+    console.warn("writeWithRetry caught:", err.code, err.message, "| retries left:", retries);
     if (err.code === "permission-denied" && retries > 0) {
       await new Promise(res => setTimeout(res, delayMs));
       return writeWithRetry(writeFn, retries - 1, delayMs);
@@ -31,6 +32,8 @@ async function generateMembershipID() {
 
 // REGISTER
 async function registerMember(formData, photoFile) {
+  console.log("=== registerMember() started ===", formData.email);
+
   const { email, password, firstName, lastName, dob, gender, phone,
           address, church, outpost, district, rank } = formData;
 
@@ -38,25 +41,42 @@ async function registerMember(formData, photoFile) {
   if (password.length < 6) throw new Error("Password must be at least 6 characters.");
 
   // Create auth user
+  console.log("Step 1: Creating auth user...");
   const cred = await auth.createUserWithEmailAndPassword(email, password);
   const uid = cred.user.uid;
+  console.log("Step 1 done. UID:", uid);
 
   // Force-refresh the ID token so Firestore security rules immediately
   // recognize this user as authenticated. Without this, the very next
   // Firestore write can intermittently fail with "permission-denied"
   // because the new auth session hasn't fully propagated yet.
+  console.log("Step 2: Refreshing ID token...");
   await cred.user.getIdToken(true);
+  console.log("Step 2 done.");
 
   // Upload photo if provided
   let photoURL = "";
   if (photoFile) {
-    const ref = storage.ref(`profile_photos/${uid}/${photoFile.name}`);
-    await ref.put(photoFile);
-    photoURL = await ref.getDownloadURL();
+    console.log("Step 3: Uploading photo...");
+    try {
+      const ref = storage.ref(`profile_photos/${uid}/${photoFile.name}`);
+      await ref.put(photoFile);
+      photoURL = await ref.getDownloadURL();
+      console.log("Step 3 done. Photo URL:", photoURL);
+    } catch (photoErr) {
+      console.error("Step 3 FAILED (photo upload):", photoErr.code, photoErr.message);
+      // Don't let a photo failure block the whole registration —
+      // continue without a photo rather than throwing.
+      photoURL = "";
+    }
+  } else {
+    console.log("Step 3 skipped: no photo provided.");
   }
 
   // Generate membership ID
+  console.log("Step 4: Generating membership ID...");
   const membershipID = await generateMembershipID();
+  console.log("Step 4 done. Membership ID:", membershipID);
 
   // Save to Firestore — with a short retry in case the auth session
   // hasn't fully propagated to the security rules engine yet.
@@ -70,7 +90,7 @@ async function registerMember(formData, photoFile) {
     church: church || "",
     outpost: outpost || "",
     district: district || "",
-    rank: rank || "Recruit",
+    rank: rank || "Lance Corporal",
     membershipID,
     photoURL,
     role: "member",
@@ -82,13 +102,15 @@ async function registerMember(formData, photoFile) {
     birthday: dob ? dob.slice(5) : "" // MM-DD for birthday reminders
   };
 
+  console.log("Step 5: Writing member document to Firestore...", memberData);
   await writeWithRetry(() => db.collection("members").doc(uid).set(memberData));
+  console.log("Step 5 done. Member document written successfully.");
 
   // Write safe public verification record (no sensitive data — for QR scan lookups)
   const publicData = {
     uid, membershipID,
     fullName: `${firstName} ${lastName}`,
-    rank: rank || "Recruit",
+    rank: rank || "Lance Corporal",
     district: district || "",
     outpost: outpost || "",
     photoURL,
@@ -96,23 +118,38 @@ async function registerMember(formData, photoFile) {
     memberSince: firebase.firestore.FieldValue.serverTimestamp()
   };
 
+  console.log("Step 6: Writing public_verify document...", publicData);
   await writeWithRetry(() => db.collection("public_verify").doc(membershipID).set(publicData));
+  console.log("Step 6 done.");
 
   // Send email verification
-  await cred.user.sendEmailVerification();
+  console.log("Step 7: Sending verification email...");
+  try {
+    await cred.user.sendEmailVerification();
+    console.log("Step 7 done.");
+  } catch (emailErr) {
+    console.warn("Step 7 failed (non-blocking):", emailErr.code, emailErr.message);
+  }
 
   // Notify admins
-  await db.collection("notifications").add({
-    type: "new_member",
-    title: "New Member Registration",
-    message: `${firstName} ${lastName} (${membershipID}) registered and awaiting approval.`,
-    global: false,
-    targetRole: "state_admin",
-    userId: "admins",
-    read: false,
-    createdAt: firebase.firestore.FieldValue.serverTimestamp()
-  });
+  console.log("Step 8: Creating admin notification...");
+  try {
+    await db.collection("notifications").add({
+      type: "new_member",
+      title: "New Member Registration",
+      message: `${firstName} ${lastName} (${membershipID}) registered and awaiting approval.`,
+      global: false,
+      targetRole: "state_admin",
+      userId: "admins",
+      read: false,
+      createdAt: firebase.firestore.FieldValue.serverTimestamp()
+    });
+    console.log("Step 8 done.");
+  } catch (notifErr) {
+    console.warn("Step 8 failed (non-blocking):", notifErr.code, notifErr.message);
+  }
 
+  console.log("=== registerMember() COMPLETE ===", { uid, membershipID });
   return { uid, membershipID };
 }
 
