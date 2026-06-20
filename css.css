@@ -69,7 +69,7 @@ section{padding:60px 0}
 
 /* ===== QUICK LINKS ===== */
 .quick-links{background:var(--light);padding:40px 0}
-.ql-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:16px}
+.ql-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:16px}
 .ql-card{background:#fff;border-radius:var(--radius);padding:24px;border-top:4px solid var(--accent,var(--blue));box-shadow:var(--shadow);transition:.25s;display:block}
 .ql-card:hover{transform:translateY(-3px);box-shadow:0 8px 24px rgba(0,0,0,.12)}
 .ql-icon{font-size:2rem;margin-bottom:12px}
@@ -357,4 +357,3 @@ tr:hover td{background:#FAFBFC}
   .footer-inner{grid-template-columns:1fr}
   .metric-grid{grid-template-columns:1fr 1fr}
 }
-

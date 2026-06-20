@@ -339,7 +339,20 @@
     <div class="admin-section" id="section-settings">
       <h3 style="margin-bottom:20px">App Settings</h3>
       <div class="dash-card" style="max-width:600px">
-        <div class="form-group"><label>Logo URL</label><input id="setLogoUrl" placeholder="https://..."/></div>
+        <div class="form-group">
+          <label>Logo</label>
+          <div style="display:flex;align-items:center;gap:14px;margin-bottom:10px">
+            <div id="currentLogoPreview" style="width:60px;height:60px;border-radius:10px;background:var(--light);display:flex;align-items:center;justify-content:center;overflow:hidden;border:1px solid var(--border)">
+              <span style="font-size:11px;color:var(--muted)">No logo</span>
+            </div>
+            <div>
+              <input type="file" id="setLogoFile" accept="image/png,image/jpeg,image/svg+xml" style="display:none" onchange="previewLogoFile(this)"/>
+              <button type="button" class="btn btn-outline-dark" onclick="document.getElementById('setLogoFile').click()" style="font-size:13px">&#128247; Upload New Logo</button>
+              <div style="font-size:11px;color:var(--muted);margin-top:4px">PNG, JPG or SVG — recommended square, max 1MB</div>
+            </div>
+          </div>
+        </div>
+        <div class="form-group"><label>Or paste an existing image URL</label><input id="setLogoUrl" placeholder="https://..."/></div>
         <div class="form-group"><label>Organisation Name</label><input id="setOrgName"/></div>
         <div class="form-group"><label>State / Command Name</label><input id="setStateName"/></div>
         <div class="form-group"><label>Contact Email</label><input id="setEmail" type="email"/></div>
@@ -565,6 +578,22 @@ function filterMembers() {
 async function approveMember(uid) {
   if (!confirm("Approve this member?")) return;
   await db.collection("members").doc(uid).update({ status: "active" });
+
+  // Sync public verification record
+  const m = allMembers.find(x => x.id === uid);
+  if (m?.membershipID) {
+    await db.collection("public_verify").doc(m.membershipID).set({
+      uid, membershipID: m.membershipID,
+      fullName: m.fullName || `${m.firstName} ${m.lastName}`,
+      rank: m.rank || "Recruit",
+      district: m.district || "",
+      outpost: m.outpost || "",
+      photoURL: m.photoURL || "",
+      status: "active",
+      memberSince: m.createdAt || firebase.firestore.FieldValue.serverTimestamp()
+    }, { merge: true });
+  }
+
   await db.collection("notifications").add({
     type:"approval", title:"Membership Approved",
     message:"Your Royal Rangers membership has been approved! Welcome to Bayelsa State Command.",
@@ -608,6 +637,25 @@ async function saveMembershipID() {
 
     res.innerHTML = "Saving...";
     await db.collection("members").doc(uid).update({ membershipID: newID });
+
+    // Move the public verification record to the new ID, remove the old one
+    const memberDoc = await db.collection("members").doc(uid).get();
+    const m = memberDoc.data();
+    const oldID = document.getElementById("editIDCurrent").value;
+
+    await db.collection("public_verify").doc(newID).set({
+      uid, membershipID: newID,
+      fullName: m.fullName || `${m.firstName} ${m.lastName}`,
+      rank: m.rank || "Recruit",
+      district: m.district || "",
+      outpost: m.outpost || "",
+      photoURL: m.photoURL || "",
+      status: m.status || "pending",
+      memberSince: m.createdAt || firebase.firestore.FieldValue.serverTimestamp()
+    });
+    if (oldID && oldID !== "—" && oldID !== newID) {
+      await db.collection("public_verify").doc(oldID).delete().catch(()=>{});
+    }
 
     // Notify the member
     await db.collection("notifications").add({
@@ -965,6 +1013,8 @@ async function sendNotification() {
 }
 
 // ===== SETTINGS =====
+let pendingLogoFile = null;
+
 function loadSettingsForm() {
   document.getElementById("setLogoUrl").value = APP_CONFIG.LOGO_URL||"";
   document.getElementById("setOrgName").value = APP_CONFIG.ORG_NAME||"";
@@ -973,13 +1023,58 @@ function loadSettingsForm() {
   document.getElementById("setPhone").value = APP_CONFIG.CONTACT_PHONE||"";
   document.getElementById("setAddress").value = APP_CONFIG.HQ_ADDRESS||"";
   document.getElementById("setPaystack").value = APP_CONFIG.PAYSTACK_PUBLIC_KEY||"";
+
+  // Show current logo preview if one exists
+  const preview = document.getElementById("currentLogoPreview");
+  if (APP_CONFIG.LOGO_URL && APP_CONFIG.LOGO_URL !== "PASTE_LOGO_LINK_HERE" && !APP_CONFIG.LOGO_URL.startsWith("file://")) {
+    preview.innerHTML = `<img src="${APP_CONFIG.LOGO_URL}" style="width:100%;height:100%;object-fit:contain"/>`;
+  }
+}
+
+function previewLogoFile(input) {
+  const file = input.files[0];
+  if (!file) return;
+  if (file.size > 1024*1024) {
+    showInlineWarning("Logo file must be under 1MB."); return;
+  }
+  pendingLogoFile = file;
+  const reader = new FileReader();
+  reader.onload = e => {
+    document.getElementById("currentLogoPreview").innerHTML =
+      `<img src="${e.target.result}" style="width:100%;height:100%;object-fit:contain"/>`;
+  };
+  reader.readAsDataURL(file);
+}
+
+function showInlineWarning(msg) {
+  const res = document.getElementById("settingsResult");
+  res.innerHTML = `<span class="error-msg">${msg}</span>`;
 }
 
 async function saveSettings() {
   const res = document.getElementById("settingsResult");
+  res.innerHTML = "Saving...";
   try {
+    let logoUrl = document.getElementById("setLogoUrl").value.trim();
+
+    // Reject local file:// paths outright — they will never work for other users
+    if (logoUrl.startsWith("file://")) {
+      res.innerHTML = '<span class="error-msg">⚠ "file://" links only work on your own computer. Please upload the logo using the button above, or paste a real https:// image link.</span>';
+      return;
+    }
+
+    // If a file was selected, upload it to Firebase Storage and use that URL instead
+    if (pendingLogoFile) {
+      res.innerHTML = "Uploading logo...";
+      const ext = pendingLogoFile.name.split(".").pop();
+      const ref = storage.ref(`branding/logo_${Date.now()}.${ext}`);
+      await ref.put(pendingLogoFile);
+      logoUrl = await ref.getDownloadURL();
+      pendingLogoFile = null;
+    }
+
     const data = {
-      LOGO_URL: document.getElementById("setLogoUrl").value.trim(),
+      LOGO_URL: logoUrl,
       ORG_NAME: document.getElementById("setOrgName").value.trim(),
       STATE: document.getElementById("setStateName").value.trim(),
       CONTACT_EMAIL: document.getElementById("setEmail").value.trim(),
@@ -989,7 +1084,9 @@ async function saveSettings() {
     };
     await db.collection("settings").doc("app_config").set(data, { merge: true });
     Object.assign(APP_CONFIG, data);
-    res.innerHTML = '<span class="success-msg">&#10003; Settings saved!</span>';
+    document.getElementById("setLogoUrl").value = logoUrl;
+    res.innerHTML = '<span class="success-msg">&#10003; Settings saved! Logo is now live across the site.</span>';
+    loadSettingsForm();
   } catch(e) { res.innerHTML = `<span class="error-msg">${e.message}</span>`; }
 }
 

@@ -80,10 +80,12 @@
       <h3 class="dash-section-title">My Membership Card</h3>
       <div class="membership-card" id="membershipCard">
         <div class="mc-header">
-          <div>
-            <img class="app-logo mc-logo" src="" alt="RR" style="display:none;height:36px"/>
-            <div class="mc-org">&#9876; ROYAL RANGERS</div>
-            <div class="mc-state app-state">BAYELSA STATE COMMAND</div>
+          <div style="display:flex;align-items:center;gap:10px">
+            <img class="app-logo" id="cardLogoImg" src="" alt="Logo" style="display:none;height:32px;width:32px;object-fit:contain;background:#fff;border-radius:6px;padding:2px"/>
+            <div>
+              <div class="mc-org">&#9876; ROYAL RANGERS</div>
+              <div class="mc-state app-state">BAYELSA STATE COMMAND</div>
+            </div>
           </div>
           <div class="mc-id-box" id="cardMemberID">—</div>
         </div>
@@ -189,11 +191,18 @@ function populateMemberUI(u) {
   }
 
   // QR Code (links to verification page)
-  new QRCode(document.getElementById("qrCode"), {
-    text: `${window.location.origin}/verify.html?id=${u.membershipID}`,
-    width: 64, height: 64,
-    colorDark: "#ffffff", colorLight: "transparent"
-  });
+  const baseUrl = getSiteBaseUrl();
+  if (baseUrl) {
+    new QRCode(document.getElementById("qrCode"), {
+      text: `${baseUrl}/verify.html?id=${u.membershipID}`,
+      width: 64, height: 64,
+      colorDark: "#0D1B2A", colorLight: "#ffffff",
+      correctLevel: QRCode.CorrectLevel.M
+    });
+  } else {
+    document.getElementById("qrCode").innerHTML =
+      '<div style="font-size:8px;color:#900;text-align:center;width:64px">QR unavailable — site not deployed yet</div>';
+  }
 
   // Stats
   document.getElementById("certCount").textContent = (u.certifications||[]).length;
@@ -263,12 +272,15 @@ async function downloadCard() {
   const { jsPDF } = window.jspdf;
   const doc = new jsPDF({ orientation: "landscape", unit: "mm", format: [85.6, 53.98] });
   const u = currentUser;
-  // Background
   doc.setFillColor(26, 82, 118);
   doc.rect(0, 0, 85.6, 53.98, "F");
-  // Logo (if set)
+  // Logo (if set) — top-left corner
   if (APP_CONFIG.LOGO_URL && APP_CONFIG.LOGO_URL !== "PASTE_LOGO_LINK_HERE") {
-    try { doc.addImage(APP_CONFIG.LOGO_URL, "PNG", 3, 2, 12, 12); } catch(e) {}
+    try {
+      doc.setFillColor(255,255,255);
+      doc.roundedRect(3, 2, 11, 11, 1, 1, "F");
+      await doc.addImage(APP_CONFIG.LOGO_URL, "PNG", 3.5, 2.5, 10, 10);
+    } catch(e) {}
   }
   doc.setFontSize(7); doc.setTextColor(212, 172, 13);
   doc.text("ROYAL RANGERS — BAYELSA STATE COMMAND", 42.8, 5, { align: "center" });

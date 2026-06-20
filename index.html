@@ -15,7 +15,7 @@
 <nav id="navbar">
   <div class="nav-inner">
     <a class="brand" href="index.html">
-      <img class="app-logo nav-logo" src="image/rr logo.png" alt="Logo" style="height:40px;display:none"/>
+      <img class="app-logo nav-logo" src="" alt="Logo" style="height:40px;display:none"/>
       <div class="logo-fallback">RR</div>
       <div class="brand-text">
         <span class="app-name">Royal Rangers</span>
@@ -43,7 +43,7 @@
 <section class="hero" id="hero">
   <div class="hero-overlay"></div>
   <div class="hero-content">
-    <img class="app-logo hero-logo" src="image/rr logo.png" alt="Royal Rangers Logo" style="display:none;height:100px;margin-bottom:20px"/>
+    <img class="app-logo hero-logo" src="" alt="Royal Rangers Logo" style="display:none;height:100px;margin-bottom:20px"/>
     <div class="hero-badge">Official Portal</div>
     <h1>Royal Rangers<br/><span class="gold-text">Bayelsa State Command</span></h1>
     <p>Building men of character, faith, and leadership — one ranger at a time.<br/>Serving God, Church, and Community across Bayelsa State.</p>
@@ -83,6 +83,11 @@
         <div class="ql-icon">&#127891;</div>
         <h3>Training Center</h3>
         <p>Manuals, courses & resources</p>
+      </a>
+      <a href="#" class="ql-card" style="--accent:#8E44AD" onclick="openVerifyWidget(event)">
+        <div class="ql-icon">&#128274;</div>
+        <h3>Verify Membership</h3>
+        <p>Check a member's ID instantly</p>
       </a>
     </div>
   </div>
@@ -207,6 +212,28 @@
   </div>
 </section>
 
+<!-- ===== VERIFY MEMBERSHIP MODAL ===== -->
+<div id="verifyModal" class="modal" style="display:none">
+  <div class="modal-box" style="max-width:440px">
+    <div style="text-align:center;margin-bottom:18px">
+      <div style="font-size:2.4rem;margin-bottom:6px">&#128274;</div>
+      <h3 style="color:var(--blue)">Verify Membership</h3>
+      <p style="font-size:13px;color:var(--muted);margin-top:4px">Enter a Membership ID to instantly check if it belongs to a registered Ranger.</p>
+    </div>
+    <div class="form-group">
+      <label>Membership ID</label>
+      <input id="verifyIdInput" placeholder="e.g. RR-BY-0001" style="text-transform:uppercase" onkeypress="if(event.key==='Enter')runVerifyLookup()"/>
+    </div>
+    <button class="btn btn-blue" style="width:100%" onclick="runVerifyLookup()" id="verifyLookupBtn">&#128269; Verify Now</button>
+
+    <div id="verifyResultBox" style="margin-top:18px;display:none">
+      <!-- populated dynamically -->
+    </div>
+
+    <button class="btn btn-outline-dark" style="width:100%;margin-top:14px" onclick="closeModal('verifyModal')">Close</button>
+  </div>
+</div>
+
 <!-- FOOTER -->
 <footer>
   <div class="footer-inner">
@@ -245,7 +272,7 @@
     </div>
   </div>
   <div class="footer-bottom">
-    &copy; <span id="yr"></span> Royal Rangers Bayelsa State Command. All Rights Reserved. | Designed by Teks Tech
+    &copy; <span id="yr"></span> Royal Rangers Bayelsa State Command. All Rights Reserved. | Assemblies of God Nigeria
   </div>
 </footer>
 
@@ -394,6 +421,76 @@ document.getElementById("contactForm").addEventListener("submit", async e => {
 
 function toggleMenu() {
   document.getElementById("navLinks").classList.toggle("open");
+}
+
+// ===== VERIFY MEMBERSHIP WIDGET =====
+function openVerifyWidget(e) {
+  if (e) e.preventDefault();
+  document.getElementById("verifyIdInput").value = "";
+  document.getElementById("verifyResultBox").style.display = "none";
+  document.getElementById("verifyResultBox").innerHTML = "";
+  document.getElementById("verifyModal").style.display = "flex";
+  setTimeout(() => document.getElementById("verifyIdInput").focus(), 100);
+}
+
+function closeModal(id) {
+  document.getElementById(id).style.display = "none";
+}
+
+async function runVerifyLookup() {
+  const input = document.getElementById("verifyIdInput");
+  const id = input.value.trim().toUpperCase();
+  const box = document.getElementById("verifyResultBox");
+  const btn = document.getElementById("verifyLookupBtn");
+
+  if (!id) {
+    box.style.display = "block";
+    box.innerHTML = '<p style="color:var(--red);font-size:13px;text-align:center">Please enter a Membership ID.</p>';
+    return;
+  }
+
+  btn.disabled = true; btn.textContent = "Checking...";
+  box.style.display = "block";
+  box.innerHTML = '<p style="color:var(--muted);font-size:13px;text-align:center">&#8987; Looking up record...</p>';
+
+  try {
+    const doc = await db.collection("public_verify").doc(id).get();
+
+    if (!doc.exists) {
+      box.innerHTML = `
+        <div style="background:#FDEDEC;border:1.5px solid #F5B7B1;border-radius:10px;padding:16px;text-align:center">
+          <div style="font-size:1.8rem;margin-bottom:6px">&#10060;</div>
+          <div style="font-weight:700;color:var(--red);font-size:14px">Not Found</div>
+          <p style="font-size:12.5px;color:var(--muted);margin-top:4px">No member matches ID "<strong>${id}</strong>". Please check the ID and try again.</p>
+        </div>`;
+    } else {
+      const m = doc.data();
+      const initials = (m.fullName||"?").split(" ").map(w=>w[0]).slice(0,2).join("").toUpperCase();
+      const statusConfig = {
+        active:   { icon:"&#9989;", label:"Active Member", bg:"#E9F7EF", border:"#A9DFBF", color:"#1E8449" },
+        pending:  { icon:"&#9203;", label:"Pending Approval", bg:"#FDFAE3", border:"#F9E79F", color:"#9A7D0A" },
+        inactive: { icon:"&#10060;", label:"Inactive", bg:"#FDEDEC", border:"#F5B7B1", color:"var(--red)" }
+      }[m.status] || { icon:"&#10067;", label:"Unknown", bg:"#F4F6F9", border:"#ddd", color:"var(--muted)" };
+
+      box.innerHTML = `
+        <div style="background:${statusConfig.bg};border:1.5px solid ${statusConfig.border};border-radius:12px;padding:18px;text-align:center">
+          <div style="width:64px;height:64px;border-radius:50%;background:var(--blue);margin:0 auto 10px;display:flex;align-items:center;justify-content:center;color:#fff;font-weight:700;font-size:1.3rem;border:3px solid var(--gold);overflow:hidden">
+            ${m.photoURL?`<img src="${m.photoURL}" style="width:100%;height:100%;object-fit:cover"/>`:initials}
+          </div>
+          <div style="font-weight:700;font-size:1.05rem;color:var(--blue)">${m.fullName||"—"}</div>
+          <div style="font-size:12px;color:var(--gold);font-weight:600;margin:2px 0 10px">&#11088; ${m.rank||"Recruit"}</div>
+          <div style="font-size:13px;font-weight:700;color:${statusConfig.color};margin-bottom:10px">${statusConfig.icon} ${statusConfig.label}</div>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;font-size:12px;text-align:left;background:rgba(255,255,255,.6);border-radius:8px;padding:10px">
+            <div><span style="color:var(--muted)">District:</span><br/><strong>${m.district||"—"}</strong></div>
+            <div><span style="color:var(--muted)">Outpost:</span><br/><strong>${m.outpost||"—"}</strong></div>
+          </div>
+          <a href="verify.html?id=${encodeURIComponent(id)}" class="btn btn-blue" style="width:100%;margin-top:12px;display:block">View Full Verification Page</a>
+        </div>`;
+    }
+  } catch(err) {
+    box.innerHTML = `<p style="color:var(--red);font-size:13px;text-align:center">Verification failed: ${err.message}</p>`;
+  }
+  btn.disabled = false; btn.textContent = "&#128269; Verify Now";
 }
 </script>
 </body>

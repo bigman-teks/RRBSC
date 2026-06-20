@@ -33,7 +33,6 @@
     border-radius:10px;
 }
 
-
 /* Cards */
 .p-card{background:#fff;border-radius:var(--radius);border:1px solid var(--border);box-shadow:var(--shadow);margin-bottom:16px;overflow:hidden}
 .p-card-header{padding:16px 20px;border-bottom:1px solid var(--border);display:flex;justify-content:space-between;align-items:center}
@@ -55,15 +54,16 @@
 /* Membership card mini */
 .mini-card{background:linear-gradient(135deg,var(--blue),#0D2C4A);border-radius:12px;padding:18px;color:#fff;position:relative;overflow:hidden}
 .mini-card::before{content:'';position:absolute;right:-30px;top:-30px;width:120px;height:120px;background:rgba(255,255,255,.05);border-radius:50%}
-.mini-card-org{font-size:9px;font-weight:700;color:var(--gold);letter-spacing:.5px}
-.mini-card-id{font-family:monospace;font-size:11px;color:rgba(255,255,255,.6);float:right}
+.mini-card-org{font-size:9px;font-weight:700;color:var(--gold);letter-spacing:.5px;line-height:1.3}
+.mini-card-id{font-family:monospace;font-size:11px;color:rgba(255,255,255,.6);flex-shrink:0;margin-left:8px}
 .mini-card-name{font-size:1rem;font-weight:700;margin:12px 0 2px}
 .mini-card-rank{font-size:12px;color:var(--gold)}
 .mini-card-footer{display:flex;justify-content:space-between;align-items:flex-end;margin-top:14px;padding-top:12px;border-top:1px solid rgba(255,255,255,.15);gap:8px}
 .mini-card-detail{font-size:10px}
 .mini-card-detail .lbl{color:rgba(255,255,255,.5)}
 .mini-card-detail .val{font-weight:600;font-size:11px}
-#mcQR canvas,#mcQR img{display:block;width:46px !important;height:46px !important}
+#mcQR canvas,#mcQR img{display:block;width:46px !important;height:46px !important;border-radius:0}
+#mcQR{padding:3px}
 
 /* Progress bar */
 .rank-progress{margin:8px 0}
@@ -201,8 +201,11 @@
       <div class="p-card-header"><h3>&#127939; Membership Card</h3></div>
       <div class="p-card-body" style="padding:0">
         <div class="mini-card" id="miniCard">
-          <div>
-            <span class="mini-card-org">&#9876; ROYAL RANGERS — BAYELSA STATE COMMAND</span>
+          <div style="display:flex;justify-content:space-between;align-items:flex-start">
+            <div style="display:flex;align-items:center;gap:8px">
+              <img class="app-logo" id="miniCardLogo" src="" alt="Logo" style="display:none;height:24px;width:24px;object-fit:contain;background:#fff;border-radius:5px;padding:1px"/>
+              <span class="mini-card-org">&#9876; ROYAL RANGERS — BAYELSA STATE COMMAND</span>
+            </div>
             <span class="mini-card-id" id="mcID">—</span>
           </div>
           <div class="mini-card-name" id="mcName">—</div>
@@ -699,9 +702,10 @@ function populateAll(u) {
   // QR code → links to public verification page
   const qrEl = document.getElementById("mcQR");
   qrEl.innerHTML = "";
-  if (u.membershipID) {
+  const baseUrl = getSiteBaseUrl();
+  if (u.membershipID && baseUrl) {
     new QRCode(qrEl, {
-      text: `${window.location.origin}/verify.html?id=${encodeURIComponent(u.membershipID)}`,
+      text: `${baseUrl}/verify.html?id=${encodeURIComponent(u.membershipID)}`,
       width: 46, height: 46,
       colorDark: "#0D1B2A", colorLight: "#ffffff",
       correctLevel: QRCode.CorrectLevel.M
