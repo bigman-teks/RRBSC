@@ -813,6 +813,90 @@ async function saveMembershipID() {
   }
 }
 
+// ===== PROMOTE MEMBER =====
+const RANK_LADDER = [
+  "Lance Corporal", "Corporal", "Sergeant", "Staff Sergeant",
+  "Warrant Officer", "Master Warrant Officer",
+  "Second Lieutenant", "Lieutenant", "Captain", "Major",
+  "Lieutenant Colonel", "Colonel",
+  "Brigadier General", "Major General", "Lieutenant General", "General"
+];
+
+function openPromoteModal(uid, name, currentRank) {
+  document.getElementById("promoteDocId").value = uid;
+  document.getElementById("promoteMemberName").textContent = name;
+  document.getElementById("promoteCurrentRank").textContent = currentRank;
+  document.getElementById("promoteReason").value = "";
+  document.getElementById("promoteResult").innerHTML = "";
+
+  const currentIdx = RANK_LADDER.indexOf(currentRank);
+  const nextRank = currentIdx >= 0 && currentIdx < RANK_LADDER.length - 1
+    ? RANK_LADDER[currentIdx + 1]
+    : currentRank;
+
+  const select = document.getElementById("promoteNewRank");
+  select.value = nextRank;
+  document.getElementById("promoteNewRankPreview").textContent = nextRank;
+
+  document.getElementById("promoteModal").style.display = "flex";
+}
+
+async function confirmPromotion() {
+  const res = document.getElementById("promoteResult");
+  const uid = document.getElementById("promoteDocId").value;
+  const newRank = document.getElementById("promoteNewRank").value;
+  const currentRank = document.getElementById("promoteCurrentRank").textContent;
+  const reason = document.getElementById("promoteReason").value.trim();
+  const memberName = document.getElementById("promoteMemberName").textContent;
+
+  if (newRank === currentRank) {
+    res.innerHTML = '<span class="error-msg">New rank is the same as current rank. Please select a different rank.</span>';
+    return;
+  }
+
+  res.innerHTML = "Saving promotion...";
+  try {
+    const isPromotion = RANK_LADDER.indexOf(newRank) > RANK_LADDER.indexOf(currentRank);
+
+    await db.collection("members").doc(uid).update({ rank: newRank });
+
+    await db.collection("members").doc(uid).collection("appointments").add({
+      title: `${isPromotion ? "Promoted" : "Rank changed"} to ${newRank}`,
+      previousRank: currentRank,
+      newRank: newRank,
+      reason: reason || "",
+      type: "rank_change",
+      startDate: new Date().toISOString().slice(0,10),
+      appointedBy: adminUser.fullName || adminUser.email || "State Administrator",
+      addedAt: new Date().toISOString()
+    });
+
+    const memberDoc = await db.collection("members").doc(uid).get();
+    const m = memberDoc.data();
+    if (m.membershipID) {
+      await db.collection("public_verify").doc(m.membershipID).set({
+        rank: newRank
+      }, { merge: true });
+    }
+
+    await db.collection("notifications").add({
+      type: "promotion",
+      title: isPromotion ? "🎉 Congratulations on Your Promotion!" : "Rank Updated",
+      message: isPromotion
+        ? `You have been promoted from ${currentRank} to ${newRank}.${reason ? " Reason: " + reason : ""}`
+        : `Your rank has been updated from ${currentRank} to ${newRank}.`,
+      userId: uid, global: false, read: false,
+      createdAt: firebase.firestore.FieldValue.serverTimestamp()
+    });
+
+    res.innerHTML = `<span class="success-msg">&#10003; ${memberName} is now ${newRank}!</span>`;
+    loadMembersTable();
+    setTimeout(() => closeModal("promoteModal"), 1500);
+  } catch(e) {
+    res.innerHTML = `<span class="error-msg">${e.message}</span>`;
+  }
+}
+
 // ===== PENDING APPROVALS =====
 async function loadPendingApprovals() {
   const snap = await db.collection("members").where("status","==","pending").orderBy("createdAt","asc").get();
