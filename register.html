@@ -9,7 +9,7 @@
 <div class="auth-container wide">
   <div class="auth-box">
     <div class="auth-logo">
-      <img class="app-logo" src="" alt="Logo" style="display:none;height:80px"/>
+      <img class="app-logo" src="image/rr logo.png" alt="Logo" style="display:none;height:80px"/>
       <div class="logo-fallback large">RR</div>
     </div>
     <h2>Member Registration</h2>
@@ -115,11 +115,16 @@
 <script src="assets/js/auth.js"></script>
 <script>
 initFirebase(); loadAppConfig();
-// NOTE: Deliberately NOT redirecting on auth state change here.
-// Registration creates the auth session immediately, but we must let
-// registerMember() finish writing to Firestore (membership ID, member
-// document, public_verify record) BEFORE navigating anywhere. The
-// registration form's own submit handler controls the redirect instead.
+// IMPORTANT: Deliberately NOT redirecting on auth state change here.
+// Registration creates the auth session immediately when
+// createUserWithEmailAndPassword() runs, but registerMember() still needs
+// to finish writing the membership ID, member document, and public_verify
+// record to Firestore AFTER that. If we redirect the moment auth state
+// changes, we abandon registerMember() mid-execution and the Firestore
+// writes never happen — the user ends up with an Auth account but no
+// Firestore profile, stuck on an endless "Loading..." dashboard.
+// The form's own submit handler below is solely responsible for
+// redirecting (to login.html), and only AFTER registerMember() resolves.
 
 function previewPhoto(input) {
   if (input.files[0]) {
