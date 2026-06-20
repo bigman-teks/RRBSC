@@ -13,8 +13,6 @@ const firebaseConfig = {
   messagingSenderId: "68712265617",
   appId: "1:68712265617:web:9e0eedf59fdd4ad7240c30"
 };
-
-
 // ============================================================
 // LOGO CONFIGURATION — Admin can update via Admin Settings page
 // ============================================================
@@ -30,9 +28,26 @@ const APP_CONFIG = {
   // Your real, permanent live site URL — used for QR codes & verification links.
   // Set this ONCE after your first deploy (e.g. "https://royal-rangers-bayelsa.web.app"
   // or your custom domain "https://www.rrbayelsa.org"). Do NOT leave this blank in production.
-  SITE_URL: "https://royalrangerbayelsastate.vercel.app/",
+  SITE_URL: "https://YOUR-PROJECT-ID.web.app",
   DISTRICTS: ["Bayelsa North", "Bayelsa East", "Bayelsa Central"],
-  RANKS: ["Recruit", "Ranger", "Ranger 1st Class", "Gold Ranger", "Staff Commander", "Commander"],
+  RANKS: [
+    "Lance Corporal",
+    "Corporal",
+    "Sergeant",
+    "Staff Sergeant",
+    "Warrant Officer",
+    "Master Warrant Officer",
+    "Second Lieutenant",
+    "Lieutenant",
+    "Captain",
+    "Major",
+    "Lieutenant Colonel",
+    "Colonel",
+    "Brigadier General",
+    "Major General",
+    "Lieutenant General",
+    "General"
+  ],
   ROLES: { SUPER_ADMIN: "super_admin", STATE_ADMIN: "state_admin", DISTRICT_ADMIN: "district_admin", OUTPOST_ADMIN: "outpost_admin", MEMBER: "member" }
 };
 

@@ -3,6 +3,14 @@
 <head>
 <meta charset="UTF-8"/><meta name="viewport" content="width=device-width,initial-scale=1"/>
 <title>My Dashboard — Royal Rangers Bayelsa</title>
+<link rel="manifest" href="manifest.json"/>
+<link rel="icon" href="assets/images/favicon.ico"/>
+<link rel="apple-touch-icon" href="assets/images/icon-192.png"/>
+<meta name="theme-color" content="#1A5276"/>
+<meta name="mobile-web-app-capable" content="yes"/>
+<meta name="apple-mobile-web-app-capable" content="yes"/>
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent"/>
+<meta name="apple-mobile-web-app-title" content="RR Bayelsa"/>
 <link rel="stylesheet" href="css.css"/>
 <!-- QR Code library -->
 <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
@@ -298,6 +306,13 @@ async function downloadCard() {
 }
 
 function toggleMenu() { document.getElementById("navLinks").classList.toggle("open"); }
+
+// Register service worker so PWA install works from this page too
+if ("serviceWorker" in navigator) {
+  window.addEventListener("load", () => {
+    navigator.serviceWorker.register("/sw.js").catch(err => console.warn("SW registration failed:", err));
+  });
+}
 </script>
 </body>
 </html>

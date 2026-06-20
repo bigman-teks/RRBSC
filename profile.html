@@ -33,6 +33,7 @@
     border-radius:10px;
 }
 
+
 /* Cards */
 .p-card{background:#fff;border-radius:var(--radius);border:1px solid var(--border);box-shadow:var(--shadow);margin-bottom:16px;overflow:hidden}
 .p-card-header{padding:16px 20px;border-bottom:1px solid var(--border);display:flex;justify-content:space-between;align-items:center}
@@ -646,7 +647,13 @@
 <script>
 document.getElementById("yr").textContent = new Date().getFullYear();
 
-const RANKS = ["Recruit","Ranger","Ranger 1st Class","Gold Ranger","Staff Commander","Commander"];
+const RANKS = [
+  "Lance Corporal", "Corporal", "Sergeant", "Staff Sergeant",
+  "Warrant Officer", "Master Warrant Officer",
+  "Second Lieutenant", "Lieutenant", "Captain", "Major",
+  "Lieutenant Colonel", "Colonel",
+  "Brigadier General", "Major General", "Lieutenant General", "General"
+];
 let currentUser = null, uploadingPhoto = false;
 
 // ── Init ──────────────────────────────────────────────────────────
