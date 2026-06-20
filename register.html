@@ -115,7 +115,11 @@
 <script src="assets/js/auth.js"></script>
 <script>
 initFirebase(); loadAppConfig();
-auth.onAuthStateChanged(u => { if (u) window.location.href = "dashboard.html"; });
+// NOTE: Deliberately NOT redirecting on auth state change here.
+// Registration creates the auth session immediately, but we must let
+// registerMember() finish writing to Firestore (membership ID, member
+// document, public_verify record) BEFORE navigating anywhere. The
+// registration form's own submit handler controls the redirect instead.
 
 function previewPhoto(input) {
   if (input.files[0]) {
