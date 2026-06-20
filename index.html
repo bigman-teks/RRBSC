@@ -490,7 +490,7 @@ async function runVerifyLookup() {
   } catch(err) {
     box.innerHTML = `<p style="color:var(--red);font-size:13px;text-align:center">Verification failed: ${err.message}</p>`;
   }
-  btn.disabled = false; btn.textContent = "&#128269; Verify Now";
+  btn.disabled = false; btn.innerHTML = "&#128269; Verify Now";
 }
 </script>
 </body>
