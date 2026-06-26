@@ -59,6 +59,7 @@ section{padding:60px 0}
 .hero{background:linear-gradient(135deg,var(--dark) 0%,var(--blue) 65%);padding:80px 2rem 60px;text-align:center;color:#fff;position:relative;overflow:hidden}
 .hero-overlay{position:absolute;inset:0;background:url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='%23ffffff' fill-opacity='0.03'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/svg%3E")}
 .hero-content{position:relative;max-width:700px;margin:auto}
+.hero-logo{display:block;margin:0 auto 20px;max-width:100px;height:auto}
 .hero-badge{display:inline-block;background:var(--gold);color:#000;padding:4px 16px;border-radius:20px;font-size:12px;font-weight:700;letter-spacing:1px;margin-bottom:16px}
 .hero h1{margin-bottom:16px}
 .hero p{font-size:1.05rem;color:rgba(255,255,255,.8);margin-bottom:32px}

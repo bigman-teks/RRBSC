@@ -130,6 +130,10 @@
 
 .position-chip{display:inline-flex;align-items:center;gap:5px;background:#EBF5FB;color:var(--blue);border:1px solid #AED6F1;border-radius:20px;padding:5px 14px;font-size:13px;font-weight:600}
 
+.btn-icon-sm{background:none;border:1px solid var(--border);border-radius:6px;width:26px;height:26px;font-size:12px;cursor:pointer;transition:.2s;display:flex;align-items:center;justify-content:center}
+.btn-icon-sm:hover{background:var(--light)}
+.btn-icon-sm.danger:hover{background:#FDEDEC;border-color:var(--red);color:var(--red)}
+
 @media(max-width:900px){
   .profile-body{grid-template-columns:1fr}
   .profile-avatar-wrap{left:20px}
@@ -632,6 +636,41 @@
   </div>
 </div>
 
+<!-- ===== EDIT APPOINTMENT MODAL ===== -->
+<div id="editApptModal" class="modal" style="display:none">
+  <div class="modal-box" style="max-width:460px">
+    <h3>&#9998; Edit Appointment</h3>
+    <input type="hidden" id="editApptDocId"/>
+    <div class="form-group">
+      <label>Position / Title *</label>
+      <input id="editApptTitle" placeholder="e.g. Outpost Commander" required/>
+    </div>
+    <div class="form-group">
+      <label>Unit / Outpost / District</label>
+      <input id="editApptUnit" placeholder="e.g. Faith Outpost, Bayelsa North"/>
+    </div>
+    <div class="form-row">
+      <div class="form-group">
+        <label>Start Date</label>
+        <input id="editApptStartDate" type="date"/>
+      </div>
+      <div class="form-group">
+        <label>End Date</label>
+        <input id="editApptEndDate" type="date"/>
+      </div>
+    </div>
+    <div class="form-group">
+      <label>Appointed By</label>
+      <input id="editApptAppointedBy" placeholder="e.g. State Commander"/>
+    </div>
+    <div id="editApptModalResult" class="form-result" style="margin:10px 0"></div>
+    <div style="display:flex;gap:10px">
+      <button class="btn btn-blue" onclick="submitEditAppointment()">&#10003; Save Changes</button>
+      <button class="btn btn-outline-dark" onclick="closeAddModal('editApptModal')">Cancel</button>
+    </div>
+  </div>
+</div>
+
 <!-- Toast -->
 <div class="toast" id="toast"></div>
 
@@ -1002,17 +1041,21 @@ async function loadAppointments(uid) {
         const since = m.appointmentDate
           ? new Date(m.appointmentDate).toLocaleDateString("en-GB",{day:"numeric",month:"short",year:"numeric"})
           : "—";
-        rows.push({ title: pos, unit: m.appointmentUnit||m.district||"", start: since, end: "Present", status: "active", appointedBy: m.appointedBy||"" });
+        rows.push({ docId: null, isCurrent: true, title: pos, unit: m.appointmentUnit||m.district||"", start: since, end: "Present", status: "active", appointedBy: m.appointedBy||"" });
       }
       apptSnap.forEach(doc => {
         const d = doc.data();
         rows.push({
+          docId: doc.id,
+          isCurrent: false,
           title: d.title||d.position||"—",
           unit: d.unit||d.district||"",
           start: d.startDate?.toDate?.().toLocaleDateString("en-GB",{day:"numeric",month:"short",year:"numeric"}) || d.startDate || "—",
+          startRaw: d.startDate || "",
           end: d.endDate
             ? (d.endDate?.toDate?.().toLocaleDateString("en-GB",{day:"numeric",month:"short",year:"numeric"}) || d.endDate)
             : "Present",
+          endRaw: d.endDate || "",
           status: d.status || (d.endDate ? "past" : "active"),
           appointedBy: d.appointedBy||""
         });
@@ -1032,10 +1075,17 @@ async function loadAppointments(uid) {
             <div class="appt-dates">&#128197; ${r.start} &rarr; ${r.end}</div>
             ${r.appointedBy?`<div class="appt-by">&#128100; Appointed by: ${r.appointedBy}</div>`:""}
           </div>
-          <span class="att-badge ${r.status==="active"?"":"" }"
-            style="${r.status==="active"?"background:#E9F7EF;color:#1E8449":"background:#f5f5f5;color:var(--muted)"}">
-            ${r.status==="active"?"&#10003; Current":"Completed"}
-          </span>
+          <div style="display:flex;flex-direction:column;align-items:flex-end;gap:6px">
+            <span class="att-badge"
+              style="${r.status==="active"?"background:#E9F7EF;color:#1E8449":"background:#f5f5f5;color:var(--muted)"}">
+              ${r.status==="active"?"&#10003; Current":"Completed"}
+            </span>
+            ${!r.isCurrent ? `
+              <div style="display:flex;gap:4px">
+                <button class="btn-icon-sm" onclick='openEditApptModal(${JSON.stringify(r).replace(/'/g,"&#39;")})' title="Edit">&#9998;</button>
+                <button class="btn-icon-sm danger" onclick="deleteAppointment('${r.docId}')" title="Delete">&#128465;</button>
+              </div>` : `<span style="font-size:10px;color:var(--muted)">Use "Add Appointment" to update</span>`}
+          </div>
         </div>`).join("");
     }
 
@@ -1276,6 +1326,59 @@ async function submitAppointment() {
     closeAddModal("addApptModal");
   } catch(e) {
     res.innerHTML = `<span class="error-msg">${e.message}</span>`;
+  }
+}
+
+// ── Edit Appointment ─────────────────────────────────────────────────
+function openEditApptModal(r) {
+  document.getElementById("editApptDocId").value = r.docId;
+  document.getElementById("editApptTitle").value = r.title || "";
+  document.getElementById("editApptUnit").value = r.unit || "";
+  document.getElementById("editApptStartDate").value = r.startRaw || "";
+  document.getElementById("editApptEndDate").value = r.endRaw || "";
+  document.getElementById("editApptAppointedBy").value = r.appointedBy || "";
+  document.getElementById("editApptModalResult").innerHTML = "";
+  document.getElementById("editApptModal").style.display = "flex";
+}
+
+async function submitEditAppointment() {
+  const res = document.getElementById("editApptModalResult");
+  const docId = document.getElementById("editApptDocId").value;
+  const title = document.getElementById("editApptTitle").value.trim();
+  if (!title) { res.innerHTML = '<span class="error-msg">Position title is required.</span>'; return; }
+
+  res.innerHTML = "Saving...";
+  try {
+    const endDate = document.getElementById("editApptEndDate").value;
+    await db.collection("members").doc(currentUser.uid)
+      .collection("appointments").doc(docId).update({
+        title,
+        unit: document.getElementById("editApptUnit").value.trim(),
+        startDate: document.getElementById("editApptStartDate").value,
+        endDate: endDate,
+        status: endDate ? "past" : "active",
+        appointedBy: document.getElementById("editApptAppointedBy").value.trim(),
+        updatedAt: new Date().toISOString()
+      });
+
+    loadAppointments(currentUser.uid);
+    showToast("Appointment updated!", "success");
+    closeAddModal("editApptModal");
+  } catch(e) {
+    res.innerHTML = `<span class="error-msg">${e.message}</span>`;
+  }
+}
+
+// ── Delete Appointment ───────────────────────────────────────────────
+async function deleteAppointment(docId) {
+  if (!confirm("Delete this appointment record? This cannot be undone.")) return;
+  try {
+    await db.collection("members").doc(currentUser.uid)
+      .collection("appointments").doc(docId).delete();
+    loadAppointments(currentUser.uid);
+    showToast("Appointment deleted.", "success");
+  } catch(e) {
+    showToast("Failed to delete: " + e.message, "error");
   }
 }
 
